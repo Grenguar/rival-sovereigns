@@ -7,3 +7,7 @@ coverage/
 test-results/
 playwright-report/
 .pnpm-store/
+
+# Fetched third-party archives — tools/fetch-assets.ts re-downloads and
+# SHA-256 verifies these; the manifest is the checked-in source of truth.
+assets/vendor/

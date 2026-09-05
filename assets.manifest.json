@@ -1,0 +1,31 @@
+{
+  "version": 1,
+  "assets": [
+    {
+      "id": "kenney-isometric-blocks",
+      "title": "Isometric Blocks",
+      "path": "assets/vendor/kenney_isometric-blocks.zip",
+      "author": "Kenney Vleugels (Kenney.nl)",
+      "licence": "CC0-1.0",
+      "licenceUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "sourcePage": "https://kenney.nl/assets/isometric-blocks",
+      "downloadUrl": "https://kenney.nl/media/pages/assets/isometric-blocks/86a0152f5b-1677662261/kenney_isometric-blocks.zip",
+      "sha256": "018f705cc4bbb8e5c9216e2e6d1f4e0090813de22f314e25a1915484b55b1729",
+      "bytes": 7288814,
+      "note": "Terrain and block tiles for the Stage B pass (docs/05-art-bible.md §5B). Licence read from the source page (\"License: Creative Commons CC0\") and confirmed against License.txt inside the archive. The download URL is content-addressed upstream, so it pins a specific release."
+    },
+    {
+      "id": "kenney-isometric-miniature-dungeon",
+      "title": "Isometric Miniature Dungeon",
+      "path": "assets/vendor/kenney_isometric-miniature-dungeon.zip",
+      "author": "Kenney Vleugels (Kenney.nl)",
+      "licence": "CC0-1.0",
+      "licenceUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "sourcePage": "https://kenney.nl/assets/isometric-miniature-dungeon",
+      "downloadUrl": "https://kenney.nl/media/pages/assets/isometric-miniature-dungeon/bdcbf8d79d-1674932261/kenney_isometric-miniature-dungeon.zip",
+      "sha256": "187a0888451317fe47caac5f26e984bb79c5ddce9b8630926f0f5d9c0247d343",
+      "bytes": 14211485,
+      "note": "Lair and dungeon props. Licence read from the source page (\"License: Creative Commons CC0\") and confirmed against License.txt inside the archive (Dungeon Pack 2.3)."
+    }
+  ]
+}
