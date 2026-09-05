@@ -65,6 +65,10 @@ const CONFIGS = TAX_RATES.flatMap((t) => BOUNTIES.flatMap((b) => SEEDS.map((s) =
 
 describe('economy sweep', () => {
   const results = CONFIGS.map(([t, b, s]) => sweep(t, b, s));
+  test('the sweep actually ran the configured grid', () => {
+    console.log(`sweep: ${CONFIGS.length} configs x ${TICKS} ticks (SWEEP=${process.env.SWEEP ?? 'subset'})`);
+    expect(results).toHaveLength(CONFIGS.length);
+  });
 
   test('every configuration recruits heroes', () => {
     for (const r of results) {
