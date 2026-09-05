@@ -15,6 +15,54 @@ type Terrain = MissionMap['terrain'][number];
 
 const tileIndex = (tx: number, ty: number): number => ty * MISSION_01_WIDTH + tx;
 
+/**
+ * Deterministic value noise.
+ *
+ * The map must be byte-identical on every run and every engine, so this is integer
+ * hashing plus linear interpolation — no Math.random, and nothing from the banned
+ * list in docs/03-determinism.md §3. Content is under the same ESLint gate as core.
+ */
+function hash2(x: number, y: number): number {
+  let h = Math.imul(x, 0x27d4eb2d) ^ Math.imul(y, 0x165667b1);
+  h = Math.imul(h ^ (h >>> 15), 0x2545f491);
+  return ((h ^ (h >>> 13)) >>> 0) / 4294967296;
+}
+
+/** Smooth 0..1 noise over cells of `scale` tiles, so patches read as woodland. */
+function noise(tx: number, ty: number, scale: number, salt: number): number {
+  const gx = tx / scale;
+  const gy = ty / scale;
+  const x0 = Math.floor(gx);
+  const y0 = Math.floor(gy);
+  const fx = gx - x0;
+  const fy = gy - y0;
+  // Smoothstep the interpolant so patch edges are soft rather than diamond-shaped.
+  const sx = fx * fx * (3 - 2 * fx);
+  const sy = fy * fy * (3 - 2 * fy);
+
+  const n00 = hash2(x0 + salt, y0);
+  const n10 = hash2(x0 + 1 + salt, y0);
+  const n01 = hash2(x0 + salt, y0 + 1);
+  const n11 = hash2(x0 + 1 + salt, y0 + 1);
+
+  const top = n00 + (n10 - n00) * sx;
+  const bottom = n01 + (n11 - n01) * sx;
+  return top + (bottom - top) * sy;
+}
+
+const PALACE_TILE = { tx: 40, ty: 54 } as const;
+const LAIR_TILES = [
+  { tx: 56, ty: 38 },
+  { tx: 19, ty: 75 },
+  { tx: 86, ty: 54 },
+] as const;
+
+const distanceTo = (tx: number, ty: number, to: { tx: number; ty: number }): number => {
+  const dx = tx - to.tx;
+  const dy = ty - to.ty;
+  return Math.sqrt(dx * dx + dy * dy);
+};
+
 function createTerrain(): Terrain[] {
   const terrain: Terrain[] = Array.from(
     { length: MISSION_01_WIDTH * MISSION_01_HEIGHT },
@@ -36,30 +84,69 @@ function createTerrain(): Terrain[] {
       for (let tx = x; tx < x + width; tx++) paint(tx, ty, value);
   };
 
-  // A light, permeable forest between the palace and Warren A. It leaves a few
-  // grass lanes, so it reads as a scouting obstacle rather than an impassable wall.
-  rectangle(48, 37, 12, 10, 'forest');
-  rectangle(52, 34, 8, 5, 'forest');
-  for (const [tx, ty] of [
-    [50, 40],
-    [53, 42],
-    [56, 40],
-    [58, 44],
-  ] as const)
-    paint(tx, ty, 'grass');
+  // ── Woodland and outcrops ────────────────────────────────────────────────
+  // The map was 95.6% grass — one tile repeated 8,807 times, which reads as
+  // wallpaper rather than terrain. Two noise fields at different scales give
+  // woodland to scout around and rock to break up the open ground.
+  for (let ty = 0; ty < MISSION_01_HEIGHT; ty++) {
+    for (let tx = 0; tx < MISSION_01_WIDTH; tx++) {
+      const wood = noise(tx, ty, 11, 0);
+      const stone = noise(tx, ty, 7, 977);
 
-  // A north-east river. The road ford is the sole safe route to the eastern camp.
-  for (let ty = 0; ty < 70; ty++) {
-    const riverX = 66 + Math.floor(ty / 14);
-    for (let tx = riverX; tx < riverX + 3; tx++) paint(tx, ty, 'water');
+      if (stone > 0.78) {
+        paint(tx, ty, 'rock');
+      } else if (wood > 0.56) {
+        paint(tx, ty, 'forest');
+      }
+    }
   }
-  rectangle(68, 53, 3, 2, 'road');
 
-  // Opening roads are visual guidance only; gameplay walkability is owned by the
-  // spatial layer when maps are wired into world creation.
+  // Denser belt between the palace and Warren A, so the tutorial threat sits
+  // behind cover exactly as docs/01-game-design.md §10 describes.
+  for (let ty = 34; ty < 47; ty++) {
+    for (let tx = 48; tx < 60; tx++) {
+      if (noise(tx, ty, 6, 41) > 0.34) paint(tx, ty, 'forest');
+    }
+  }
+
+  // ── The north-east river ─────────────────────────────────────────────────
+  // The eastern camp is meant to be a commitment, so the river is the barrier and
+  // the ford is the decision.
+  for (let ty = 0; ty < 72; ty++) {
+    const riverX = 66 + Math.floor(ty / 14) + Math.floor(noise(0, ty, 9, 7) * 3);
+    for (let tx = riverX; tx < riverX + 4; tx++) paint(tx, ty, 'water');
+  }
+
+  // ── Roads ────────────────────────────────────────────────────────────────
   rectangle(35, 54, 31, 1, 'road');
-  rectangle(40, 54, 1, 6, 'road');
+  rectangle(40, 48, 1, 12, 'road');
   rectangle(20, 75, 21, 1, 'road');
+  rectangle(40, 60, 1, 16, 'road');
+  // The ford: the sole dry crossing to the goblin camp.
+  rectangle(66, 54, 8, 2, 'road');
+  rectangle(74, 54, 12, 1, 'road');
+
+  // ── Clearings ────────────────────────────────────────────────────────────
+  // Nothing may grow over the build radius or the approach to a lair; a warren
+  // hidden inside a forest cannot be seen, approached or fought.
+  for (let ty = 0; ty < MISSION_01_HEIGHT; ty++) {
+    for (let tx = 0; tx < MISSION_01_WIDTH; tx++) {
+      const onRoad = terrain[tileIndex(tx, ty)] === 'road';
+      const onWater = terrain[tileIndex(tx, ty)] === 'water';
+      if (onRoad || onWater) continue;
+
+      if (distanceTo(tx, ty, PALACE_TILE) <= 11) {
+        paint(tx, ty, 'grass');
+        continue;
+      }
+      // Just enough room to see and approach a lair. Wider than this and Warren A
+      // stops sitting "behind light forest" the way §10 describes it.
+      for (const lair of LAIR_TILES) {
+        if (distanceTo(tx, ty, lair) <= 3) paint(tx, ty, 'grass');
+      }
+    }
+  }
+
   return terrain;
 }
 
