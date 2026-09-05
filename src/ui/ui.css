@@ -103,14 +103,21 @@ body,
 .rs-world-label {
   position: absolute;
   transform: translate(-50%, -100%);
-  width: 64px;
+  /* Wide enough for a full hero name. At 64px every name ellipsised to nothing,
+     so the labels were rendering and invisible. */
+  width: 150px;
 }
 .rs-health-bar {
   background: rgb(11 13 20 / 85%);
   border: 1px solid #20202a;
   display: block;
   height: 5px;
+  /* Fixed width, centred. The label box is wide enough for a hero's full name, and
+     a block-level bar inherited that width and drew as a 150px streak across the
+     map with no unit under it. */
+  margin: 0 auto;
   overflow: hidden;
+  width: 40px;
 }
 .rs-health-bar span {
   background: linear-gradient(90deg, #c4453a 0 28%, #e8b93c 29% 59%, #6ecb76 60%);

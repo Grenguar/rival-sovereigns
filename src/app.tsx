@@ -1,5 +1,5 @@
 import { Assets, type Spritesheet, type Texture } from 'pixi.js';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { PLACEABLE } from './content/buildings';
 import { MISSION_01, terrainAt } from './content/maps/mission-01';
 import { createScenario, MISSION_01 as MISSION } from './core/scenario';
@@ -94,8 +94,16 @@ export function App(): JSX.Element {
   };
   const projectTile = (tile: TileCoord): { x: number; y: number } | null =>
     rendererRef.current?.projectTile(tile) ?? null;
+  // Indexed once per snapshot. A linear find() per label per frame is ~90x90
+  // comparisons every frame once the kingdom is populated.
+  const entityById = useMemo(() => {
+    const map = new Map<EntityId, (typeof snapshot.entities)[number]>();
+    for (const e of snapshot.entities) map.set(e.id, e);
+    return map;
+  }, [snapshot]);
+
   const projectEntity = (id: EntityId): { x: number; y: number } | null => {
-    const entity = snapshot.entities.find((candidate) => candidate.id === id);
+    const entity = entityById.get(id);
     return entity === undefined
       ? null
       : projectTile({ tx: entity.transform.x, ty: entity.transform.y });
