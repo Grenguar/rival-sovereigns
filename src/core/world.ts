@@ -90,6 +90,12 @@ export class World implements WorldView {
   escrow = 0;
   taxRate = 0.2;
   palaceLevel = 1;
+  /** Cumulative tax revenue — the palace reaches level 2 at 3,000. */
+  taxCollected = 0;
+  /** Cumulative shop revenue, for the economy balance sweeps. */
+  shopRevenue = 0;
+  /** Gold minted this run (stipend + loot), for the conservation invariant. */
+  goldCreated = 0;
   wave = 0;
   outcome: 'playing' | 'won' | 'lost' = 'playing';
 
@@ -243,6 +249,13 @@ export class World implements WorldView {
   /** Queued now, drained at the start of the next tick. Never applied inline. */
   issue(command: Command): void {
     this.commandQueue.push(command);
+  }
+
+  creditTreasury(amount: number, reason: string): void {
+    if (amount <= 0) return;
+    this.treasury += amount;
+    this.shopRevenue += amount;
+    void reason;
   }
 
   emit(event: WorldEvent): void {

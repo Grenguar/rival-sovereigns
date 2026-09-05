@@ -305,6 +305,7 @@ const BuyPotion: ActionDef = {
     if (self.purse.gold < POTION_COST) return false;
     self.purse.gold -= POTION_COST;
     self.equipment.potions += 1;
+    w.creditTreasury(POTION_COST, 'potion');
     return true;
   }),
 };
@@ -312,7 +313,10 @@ const BuyPotion: ActionDef = {
 const DrinkPotion: ActionDef = {
   id: 'DrinkPotion',
   pre: requireAll(S.HAS_POTION),
-  eff: requireNone(S.IS_INJURED, S.HAS_POTION),
+  // Clears IS_CRITICAL too. Survive's target state is SAFE and not-critical, so
+  // without this no action in the game can satisfy it and every dying hero plans
+  // null — which is precisely when the planner most needs to work.
+  eff: merge(requireNone(S.IS_INJURED, S.IS_CRITICAL), requireNone(S.HAS_POTION)),
   classes: 'all',
   cost: () => 1,
   isValid: (a, w) => (agentEntity(a, w)?.equipment?.potions ?? 0) > 0,
@@ -343,6 +347,7 @@ const BuyUpgrade: ActionDef = {
     self.purse.gold -= choice.cost;
     if (choice.slot === 'weapon') self.equipment.weaponTier = choice.tier;
     else self.equipment.armourTier = choice.tier;
+    w.creditTreasury(choice.cost, 'upgrade');
     return true;
   }),
 };
@@ -372,7 +377,7 @@ export function nextUpgrade(
 const RestAtInn: ActionDef = {
   id: 'RestAtInn',
   pre: requireAll(S.AT_INN, S.HAS_GOLD),
-  eff: merge(requireAll(S.IS_RESTED), requireNone(S.IS_INJURED, S.HAS_GOLD)),
+  eff: merge(requireAll(S.IS_RESTED), requireNone(S.IS_INJURED, S.IS_CRITICAL, S.HAS_GOLD)),
   classes: 'all',
   cost: () => 5,
   isValid: (a, w) => (purseOf(a, w)?.gold ?? 0) >= INN_REST_COST,
@@ -380,7 +385,10 @@ const RestAtInn: ActionDef = {
   runtime: {
     start(a, w) {
       const purse = purseOf(a, w);
-      if (purse !== undefined && purse.gold >= INN_REST_COST) purse.gold -= INN_REST_COST;
+      if (purse !== undefined && purse.gold >= INN_REST_COST) {
+        purse.gold -= INN_REST_COST;
+        w.creditTreasury(INN_REST_COST, 'inn');
+      }
       a.blackboard.sensorDue.restUntil = w.tick + INN_REST_TICKS;
     },
     tick(a, w): StepResult {
@@ -408,7 +416,7 @@ const RestAtInn: ActionDef = {
 const HealAtGuild: ActionDef = {
   id: 'HealAtGuild',
   pre: requireAll(S.AT_HOME_GUILD),
-  eff: requireNone(S.IS_INJURED),
+  eff: requireNone(S.IS_INJURED, S.IS_CRITICAL),
   classes: 'all',
   cost: () => 25,
   isValid: (a, w) => w.isAlive(a.blackboard.homeGuild),

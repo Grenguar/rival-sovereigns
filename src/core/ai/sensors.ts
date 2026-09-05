@@ -19,6 +19,8 @@ import { NULL_HANDLE } from '../types';
 import { CLASSES } from '../../content/classes';
 import { ARRIVAL_RADIUS } from './goap/actions';
 import { DEFEND_NOTICE_RADIUS, SENSOR_PERIOD, THREAT_RADIUS } from './blackboard';
+import { fogOf } from '../systems/fog';
+import type { World } from '../world';
 
 /**
  * Proximity lookup. The architecture calls for the 64px spatial hash to serve every
@@ -179,6 +181,33 @@ export function forgetFlag(a: Agent, id: number): void {
   a.blackboard.knownFlags = a.blackboard.knownFlags.filter((f) => f.id !== id);
 }
 
+/**
+ * Nearest tile on the edge of the known world.
+ *
+ * The frontier list is built once per refresh by the fog system; this only picks the
+ * closest entry. Ties break by tx then ty so two heroes in the same spot make the
+ * same choice on every engine.
+ */
+export function frontierSensor(a: Agent, w: World): void {
+  const self = w.get(a.entity);
+  if (self === null) return;
+  const fog = fogOf(w);
+
+  let best: { tx: number; ty: number } | null = null;
+  let bestD2 = Number.POSITIVE_INFINITY;
+
+  for (const t of fog.frontier) {
+    const dx = t.tx - self.transform.x;
+    const dy = t.ty - self.transform.y;
+    const d2 = dx * dx + dy * dy;
+    if (d2 < bestD2 || (d2 === bestD2 && best !== null && (t.tx < best.tx || (t.tx === best.tx && t.ty < best.ty)))) {
+      best = t;
+      bestD2 = d2;
+    }
+  }
+  a.blackboard.frontierTile = best === null ? null : { tx: best.tx, ty: best.ty };
+}
+
 // ── the scheduler ───────────────────────────────────────────────────────────
 
 /**
@@ -186,7 +215,7 @@ export function forgetFlag(a: Agent, id: number): void {
  * than ~10 µs per agent ever runs for every agent every tick — the primary lever in
  * docs/02-architecture.md §7.
  */
-export function runSensors(w: WorldView, agents: readonly Entity[], index: ProximityIndex): void {
+export function runSensors(w: World, agents: readonly Entity[], index: ProximityIndex): void {
   for (const e of agents) {
     const a = e.agent;
     if (a === undefined || !e.alive) continue;
@@ -194,6 +223,7 @@ export function runSensors(w: WorldView, agents: readonly Entity[], index: Proxi
     if (due(a, w, 'vision', SENSOR_PERIOD.vision)) visionSensor(a, w, index);
     if (due(a, w, 'threat', SENSOR_PERIOD.threat)) threatSensor(a, w, index);
     if (due(a, w, 'economic', SENSOR_PERIOD.economic)) economicSensor(a, w);
+    if (due(a, w, 'frontier', SENSOR_PERIOD.frontier)) frontierSensor(a, w);
 
     a.currentState = computeCurrentState(a, w);
   }

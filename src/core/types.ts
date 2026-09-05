@@ -324,8 +324,12 @@ export interface Plan {
   goalId: GoalId;
   steps: PlanStep[];
   index: number;
+  /** Last index whose runtime.start() has run, so start fires exactly once per step. */
+  startedIndex: number;
   /** Union of every step's precondition mask; a flip here invalidates the plan. */
   accumulatedMask: number;
+  /** The truth of those symbols when the plan was made, to detect a flip. */
+  maskedValues: number;
   totalCost: number;
   createdTick: number;
 }
@@ -481,6 +485,15 @@ export interface WorldView {
   byId(id: EntityId): Entity | null;
   isAlive(h: Handle): boolean;
   entitiesInIdOrder(): Iterable<Entity>;
+  /**
+   * Moves gold into the crown's treasury.
+   *
+   * The player owns the shops, so 100% of what a hero spends comes straight back
+   * (docs/01-game-design.md §3.1). Action runtimes need this or bounty gold would
+   * leave the economy permanently, which breaks the central "bounties are stimulus,
+   * not pure cost" claim the whole design rests on.
+   */
+  creditTreasury(amount: number, reason: string): void;
 }
 
 export interface PlannerStats {
@@ -489,4 +502,9 @@ export interface PlannerStats {
   nullPlans: number;
   attempts: number;
   expansions: number;
+  /** Null plans broken down by goal, for the dev overlay — docs/04-ai-spec.md §6. */
+  nullsByGoal: Record<string, number>;
+  /** Attempts and nulls for heroes only: §12's 5% ceiling is a hero criterion. */
+  heroAttempts: number;
+  heroNulls: number;
 }

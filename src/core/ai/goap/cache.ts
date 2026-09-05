@@ -6,12 +6,12 @@
  * performance problem — docs/04-ai-spec.md §6.
  */
 
-import type { ClassId, GoalId, PlannerStats, State } from '../../types';
+import type { AgentKindId, GoalId, PlannerStats, State } from '../../types';
 import { PLAN_CACHE_CAPACITY } from '../../../content/balance';
 import { stateHash } from './state';
 import type { PlanResult } from './planner';
 
-export function planKey(goalId: GoalId, state: State, classId: ClassId): string {
+export function planKey(goalId: GoalId, state: State, classId: AgentKindId): string {
   return `${goalId}:${stateHash(state)}:${classId}`;
 }
 

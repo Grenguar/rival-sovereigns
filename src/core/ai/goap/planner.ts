@@ -105,7 +105,17 @@ class NodeHeap {
 function actionHelps(action: ActionDef, required: State, unsatisfied: number): boolean {
   const overlap = action.eff.mask & unsatisfied;
   if (overlap === 0) return false;
-  return (action.eff.values & overlap) === (required.values & overlap);
+  if ((action.eff.values & overlap) !== (required.values & overlap)) return false;
+
+  // The action must not contradict the requirement *anywhere* it touches it, not
+  // just on the bits still unsatisfied.
+  //
+  // regress() drops the requirement on every bit in eff.mask. Without this check an
+  // action whose side effect clobbers an already-satisfied goal bit is accepted, the
+  // requirement silently disappears, and the planner returns a plan that does not
+  // actually reach the goal. The §3 property test catches it immediately.
+  const touched = action.eff.mask & required.mask;
+  return (action.eff.values & touched) === (required.values & touched);
 }
 
 /** Walks parent pointers from the terminal node to the root, which is forward order. */
@@ -210,4 +220,7 @@ export const emptyPlannerStats = (): PlannerStats => ({
   nullPlans: 0,
   attempts: 0,
   expansions: 0,
+  nullsByGoal: {},
+  heroAttempts: 0,
+  heroNulls: 0,
 });
