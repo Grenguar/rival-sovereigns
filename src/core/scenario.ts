@@ -8,8 +8,15 @@
 
 import { World } from './world';
 import type { TileCoord } from './types';
-import { createBuilding, createLair } from './factory';
-import { STARTING_TREASURY, DEFAULT_TAX_RATE, MAX_TAX_RATE, MIN_TAX_RATE } from '../content/balance';
+import { createBuilding, createHero, createLair } from './factory';
+import { GUILD_FOR_CLASS } from '../content/buildings';
+import {
+  DEFAULT_TAX_RATE,
+  MAX_TAX_RATE,
+  MIN_TAX_RATE,
+  STARTING_HEROES,
+  STARTING_TREASURY,
+} from '../content/balance';
 import { runSensors, linearProximityIndex } from './ai/sensors';
 import { installAi } from './ai/agent-system';
 import { fsmSystem } from './ai/fsm';
@@ -127,6 +134,19 @@ export function createScenario(options: ScenarioOptions): World {
   createBuilding(w, 'palace', mission.palace, true);
   for (const b of mission.buildings) createBuilding(w, b.kind, b.tile, true);
   for (const l of mission.lairs) createLair(w, l.kind, l.tile);
+
+  // A kingdom already in progress. Opening on an empty map and asking the player to
+  // wait out the first recruit timer is the least interesting version of this game.
+  for (const classId of STARTING_HEROES) {
+    const guildKind = GUILD_FOR_CLASS[classId];
+    const guild = w.views.buildings.find((b) => b.building?.kind === guildKind);
+    if (guild === undefined) continue;
+    const hero = createHero(w, classId, {
+      tx: Math.round(guild.transform.x) + 1,
+      ty: Math.round(guild.transform.y) + 2,
+    });
+    if (hero?.agent !== undefined) hero.agent.blackboard.homeGuild = guild.handle;
+  }
 
   installSystems(w);
   return w;

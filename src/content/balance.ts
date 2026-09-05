@@ -88,8 +88,26 @@ export const ROGUE_LOOT_BONUS = 0.6;
 
 // ── Waves — §7 ──────────────────────────────────────────────────────────────
 
-/** First lair spawn at t = 60 s. */
-export const FIRST_SPAWN_TICK = 600;
+/**
+ * First lair spawn at t = 20 s.
+ *
+ * Was 60 s, which meant the opening minute had nothing in it at all: no heroes yet
+ * (first recruit at 40 s) and no threat. A playtest at 0:22 showed Heroes 0,
+ * Threats 0, Wave 0 — every number correct, and nothing to watch. The mission needs
+ * to start moving before the player decides it is broken.
+ */
+export const FIRST_SPAWN_TICK = 200;
+
+/**
+ * A guild's first recruit arrives well before its steady-state interval.
+ *
+ * The 40 s cadence is right once a kingdom is running; paying it before the first
+ * hero exists just delays the start of the game.
+ */
+export const FIRST_RECRUIT_TICKS = 60;
+
+/** Heroes already in service when the mission opens, by class. */
+export const STARTING_HEROES = ['warrior', 'warrior', 'rogue'] as const;
 
 // ── AI cadence — docs/02-architecture.md §7 ─────────────────────────────────
 

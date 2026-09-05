@@ -126,6 +126,7 @@ export function economicSensor(a: Agent, w: WorldView): void {
   let smith: Entity | null = null;
   let inn: Entity | null = null;
   let guild: Entity | null = null;
+  let palace: Entity | null = null;
 
   const closer = (candidate: Entity, best: Entity | null): boolean => {
     if (best === null) return true;
@@ -149,6 +150,9 @@ export function economicSensor(a: Agent, w: WorldView): void {
       case 'inn':
         if (closer(e, inn)) inn = e;
         break;
+      case 'palace':
+        if (closer(e, palace)) palace = e;
+        break;
       default:
         if (e.building.kind === homeGuildKind && closer(e, guild)) guild = e;
         break;
@@ -160,7 +164,11 @@ export function economicSensor(a: Agent, w: WorldView): void {
     smith: smith === null ? NULL_HANDLE : smith.handle,
     inn: inn === null ? NULL_HANDLE : inn.handle,
   };
-  if (guild !== null) a.blackboard.homeGuild = guild.handle;
+  // A hero whose guild has been destroyed rallies to the palace. Without a fallback
+  // its home handle stays dangling, MoveToGuild can never resolve, and the hero is
+  // stranded on Idle for the rest of the mission.
+  const home = guild ?? palace;
+  if (home !== null) a.blackboard.homeGuild = home.handle;
 }
 
 /**

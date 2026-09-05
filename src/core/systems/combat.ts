@@ -63,6 +63,12 @@ export function applyDamage(w: World, target: Entity, amount: number, from: Enti
     target.combat.lastDamageFrom = from.handle;
     target.combat.lastDamageTick = w.tick;
   }
+  // Buildings never swing, so they carry the attacker on the building component.
+  // This is what DefendHome resolves its target from.
+  if (target.building !== undefined && from !== null) {
+    target.building.lastAttacker = from.handle;
+    target.building.lastAttackTick = w.tick;
+  }
   // An agent that takes damage re-scores Survive and DefendHome immediately rather
   // than waiting up to a second for its turn — docs/04-ai-spec.md §4.
   if (target.agent !== undefined) {

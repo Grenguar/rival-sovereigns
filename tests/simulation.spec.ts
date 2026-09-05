@@ -40,12 +40,39 @@ describe('the simulation runs', () => {
     }
   });
 
-  test('heroes do not all choose the same goal — traits actually differentiate', () => {
+  test('heroes spread across goals over a run, and mostly are not idling', () => {
+    // Sampled across the whole run, not at one instant. At any single tick every
+    // hero may legitimately share a goal — a wave lands and they all fight — so an
+    // instantaneous snapshot tests nothing and fails at random.
+    const w = createScenario({ seed: 99 });
+    const spent: Record<string, number> = {};
+    let heroTicks = 0;
+
+    for (let i = 0; i < TICKS; i++) {
+      w.step();
+      for (const e of w.views.agents) {
+        if (e.kind !== 'hero' || !e.alive) continue;
+        const goal = e.agent?.currentGoal ?? 'none';
+        spent[goal] = (spent[goal] ?? 0) + 1;
+        heroTicks++;
+      }
+    }
+
+    // Four distinct goals is the difference between a simulation and a screensaver.
+    const used = Object.keys(spent).filter((g) => g !== 'none' && (spent[g] ?? 0) > 0);
+    expect(used.length).toBeGreaterThanOrEqual(4);
+
+    // Heroes idled 69% of the time before the Idle goal learned to walk them home,
+    // while the kingdom burned down around them. That must not come back.
+    expect((spent.Idle ?? 0) / heroTicks).toBeLessThan(0.4);
+    expect((spent.HuntMonster ?? 0) / heroTicks).toBeGreaterThan(0.05);
+  });
+
+  test('the kingdom survives a 5,000-tick run rather than being annihilated', () => {
+    // The measured failure this guards: every building destroyed by tick 4,000.
     const w = run(99);
-    const goals = new Set(
-      w.views.agents.filter((e) => e.kind === 'hero').map((e) => e.agent?.currentGoal),
-    );
-    expect(goals.size).toBeGreaterThan(1);
+    const standing = w.views.buildings.filter((b) => b.alive).length;
+    expect(standing).toBeGreaterThan(0);
   });
 
   test('no hero sits idle for more than 60 seconds', () => {
