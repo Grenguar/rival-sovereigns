@@ -14,6 +14,11 @@
   --rs-space-4: 16px;
   --rs-space-5: 24px;
 }
+html, body, #root, .rs-game { height: 100%; margin: 0; overflow: hidden; }
+.rs-game { background: var(--rs-fog); position: relative; }
+.rs-game canvas { display: block; height: 100%; width: 100%; }
+.rs-game > .rs-hud { left: 12px; position: absolute; top: 12px; z-index: 10; }
+.rs-game > .rs-inspector { position: absolute; right: 12px; top: 12px; z-index: 10; }
 
 .rs-hud,
 .rs-inspector {
