@@ -10,7 +10,7 @@
     "dev": "vite",
     "build": "tsc -b && vite build",
     "preview": "vite preview",
-    "pregen": "tsx tools/gen-curves.ts",
+    "pregen": "tsx tools/gen-curves.ts && tsx tools/make-placeholders.ts && tsx tools/build-atlas.ts && tsx tools/gen-credits.ts",
     "test": "vitest run",
     "test:watch": "vitest",
     "lint": "eslint . && tsc --noEmit",
