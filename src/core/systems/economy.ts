@@ -58,6 +58,14 @@ export const outcomeSystem = (w: World): void => {
     return;
   }
 
-  const lairs = w.views.lairs;
-  if (lairs.length > 0 && lairs.every((l) => !l.alive)) w.outcome = 'won';
+  // Every lair, not w.views.lairs — that view filters to *alive* lairs, so asking
+  // whether they are all dead could never be true and the mission was unwinnable.
+  let total = 0;
+  let alive = 0;
+  for (const e of w.entitiesInIdOrder()) {
+    if (e.lair === undefined) continue;
+    total++;
+    if (e.alive) alive++;
+  }
+  if (total > 0 && alive === 0) w.outcome = 'won';
 };

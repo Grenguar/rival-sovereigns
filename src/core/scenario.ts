@@ -45,6 +45,11 @@ export const MISSION_01: MissionSpec = {
     { kind: 'marketplace', tile: { tx: 36, ty: 55 } },
     { kind: 'blacksmith', tile: { tx: 44, ty: 55 } },
     { kind: 'inn', tile: { tx: 40, ty: 57 } },
+    // Two guards on a fixed post. Heroes are under no obligation to come home, so
+    // without a standing garrison an unattended palace dies to the first waves —
+    // well inside the five minutes §11 rules out for any configuration.
+    { kind: 'guardhouse', tile: { tx: 41, ty: 50 } },
+    { kind: 'guardhouse', tile: { tx: 39, ty: 54 } },
   ],
   lairs: [
     { kind: 'ratkinWarren', tile: { tx: 58, ty: 36 } }, // 22 tiles NE
