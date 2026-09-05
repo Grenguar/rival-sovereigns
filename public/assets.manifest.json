@@ -5,6 +5,22 @@
     "license": "self-made",
     "author": "Rival Sovereigns contributors",
     "sourcePage": "tools/make-placeholders.ts",
-    "sha256": "ec34475ef008928455e52496f1c378f011b5f6eeef7eb00602b70485f3a43fdc"
+    "sha256": "2f35a16e3185539398156dc5a6ca205c800f003aea6940f36d8a733807aa210e"
+  },
+  {
+    "name": "stage-b-kenney-isometric-blocks",
+    "url": "https://kenney.nl/assets/isometric-blocks",
+    "license": "CC0-1.0",
+    "author": "Kenney Vleugels (Kenney.nl)",
+    "sourcePage": "https://kenney.nl/assets/isometric-blocks",
+    "licenceUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+    "frames": [
+      "terrain_forest",
+      "terrain_grass",
+      "terrain_road",
+      "terrain_rock",
+      "terrain_water"
+    ],
+    "sha256": "2f35a16e3185539398156dc5a6ca205c800f003aea6940f36d8a733807aa210e"
   }
 ]

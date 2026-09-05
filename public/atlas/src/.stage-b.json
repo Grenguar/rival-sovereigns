@@ -1,0 +1,10 @@
+{
+  "sourceAssetId": "kenney-isometric-blocks",
+  "frames": [
+    "terrain_forest",
+    "terrain_grass",
+    "terrain_road",
+    "terrain_rock",
+    "terrain_water"
+  ]
+}
