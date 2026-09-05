@@ -25,15 +25,21 @@ export default tseslint.config(
     rules: {
       '@typescript-eslint/no-explicit-any': 'error',
       '@typescript-eslint/consistent-type-imports': ['error', { prefer: 'type-imports' }],
-      '@typescript-eslint/no-unused-vars': ['error', { argsIgnorePattern: '^_' }],
+      '@typescript-eslint/no-unused-vars': [
+        'error',
+        { argsIgnorePattern: '^_', varsIgnorePattern: '^_', ignoreRestSiblings: true },
+      ],
       eqeqeq: ['error', 'always', { null: 'ignore' }],
       'no-console': ['warn', { allow: ['warn', 'error'] }],
     },
   },
 
   // ---- The determinism gate. Never add an eslint-disable for anything below. ----
+  // src/content is included deliberately: content is loaded straight into the
+  // simulation, and docs/03-determinism.md §6 lists "a Math.random in a content
+  // file" as one of the likeliest causes of a divergence.
   {
-    files: ['src/core/**/*.ts'],
+    files: ['src/core/**/*.ts', 'src/content/**/*.ts'],
     rules: {
       'no-restricted-properties': [
         'error',
