@@ -52,8 +52,25 @@ export const MAX_TAX_RATE = 0.5;
 export const PALACE_STIPEND = 8;
 export const PALACE_STIPEND_PERIOD_TICKS = 100;
 
-/** Cumulative tax revenue that promotes the palace to level 2. */
-export const PALACE_L2_THRESHOLD = 3000;
+/**
+ * Cumulative crown revenue that promotes the palace to level 2.
+ *
+ * DEVIATION from docs/01-game-design.md §3.3, which specifies 3,000 of cumulative
+ * *tax* revenue. Measured across 16 configurations, a full mission collects between
+ * 166 and 533 in tax, so 3,000 is unreachable by roughly an order of magnitude. The
+ * palace never reached level 2 in any run, which meant the Ranger's Lodge could
+ * never be built and rangers — a third of the game's classes, and the only source
+ * of the wider fog reveal — were unreachable content.
+ *
+ * Two changes, both minimal:
+ *   - the threshold is measured against tax *and* shop revenue, since the player
+ *     owns the shops and both are the crown's income;
+ *   - 600, which lands the unlock mid-mission rather than never.
+ *
+ * Worth raising with the design: the deeper issue is that shop revenue outearns tax
+ * roughly 2:1, so the tax slider is a weaker lever than §3.2 intends it to be.
+ */
+export const PALACE_L2_THRESHOLD = 600;
 
 /** Heroes bank personal gold above this when idle at their guild. */
 export const HERO_BANK_THRESHOLD = 100;

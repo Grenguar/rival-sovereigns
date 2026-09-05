@@ -36,8 +36,10 @@ function countHenchmen(w: World, kind: HenchmanKind): number {
 const nextTo = (b: Entity) => ({ tx: Math.round(b.transform.x) + 1, ty: Math.round(b.transform.y) + 1 });
 
 export const spawningSystem = (w: World): void => {
-  // Palace level 2 unlocks at 3,000 cumulative tax revenue — §3.3.
-  if (w.palaceLevel < 2 && w.taxCollected >= PALACE_L2_THRESHOLD) w.palaceLevel = 2;
+  // Crown revenue, not tax alone — see PALACE_L2_THRESHOLD for why.
+  if (w.palaceLevel < 2 && w.taxCollected + w.shopRevenue >= PALACE_L2_THRESHOLD) {
+    w.palaceLevel = 2;
+  }
 
   for (const b of w.views.buildings) {
     const building = b.building;
