@@ -27,11 +27,21 @@ const rules = (overrides: Partial<PlacementRules> = {}): PlacementRules => ({
 
 describe('building placement', () => {
   test('allows an MVP footprint entirely within the initial Palace radius', () => {
-    const result = validatePlacement({ kind: 'marketplace', tile: { tx: 43, ty: 57 } }, rules());
+    const result = validatePlacement({ kind: 'marketplace', tile: { tx: 44, ty: 58 } }, rules());
     expect(result).toMatchObject({ valid: true, reason: null });
     expect(result.footprint).toEqual([
-      { tx: 43, ty: 57 }, { tx: 44, ty: 57 }, { tx: 43, ty: 58 }, { tx: 44, ty: 58 },
+      { tx: 44, ty: 58 }, { tx: 45, ty: 58 }, { tx: 44, ty: 59 }, { tx: 45, ty: 59 },
     ]);
+  });
+
+  test('requires a one-tile gap between buildings, including diagonally', () => {
+    // (43,57) touches the palace's 3x3 footprint corner-to-corner. The gap is what
+    // keeps units able to path between buildings, so a diagonal touch is rejected
+    // rather than merely a direct overlap.
+    expect(validatePlacement({ kind: 'marketplace', tile: { tx: 43, ty: 57 } }, rules())).toMatchObject({
+      valid: false,
+      reason: 'too-close-to-building',
+    });
   });
 
   test('uses every completed building as an eight-tile frontier extension', () => {

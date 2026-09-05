@@ -73,7 +73,14 @@ export function validatePlacement(request: PlacementRequest, rules: PlacementRul
   if (footprint.some((tile) => !withinBuildRadius(tile, rules.completedSites))) {
     return invalid('outside-build-radius', footprint);
   }
-  if (footprint.some((tile) => !BUILDABLE_TERRAIN.has(rules.map.terrainAt(tile)))) {
+  // terrainAt returns null off the map. The bounds check above already rejected
+  // that, but treating an unknown tile as unbuildable is the safe direction.
+  if (
+    footprint.some((tile) => {
+      const terrain = rules.map.terrainAt(tile);
+      return terrain === null || !BUILDABLE_TERRAIN.has(terrain);
+    })
+  ) {
     return invalid('blocked-terrain', footprint);
   }
   if (footprint.some((tile) => overlaps(tile, rules.completedSites))) return invalid('occupied', footprint);
@@ -109,11 +116,21 @@ function withinBuildRadius(tile: TileCoord, sites: readonly CompletedSite[]): bo
 }
 
 function overlaps(tile: TileCoord, sites: readonly CompletedSite[]): boolean {
-  return sites.some((site) => footprintAt(site.tile, BUILDINGS[site.kind].footprint).some((other) => sameTile(tile, other)));
+  return sites.some((site) => {
+    const def = BUILDINGS[site.kind];
+    if (def === undefined) return false;
+    return footprintAt(site.tile, def.footprint).some((other) => sameTile(tile, other));
+  });
 }
 
 function violatesSpacing(tile: TileCoord, sites: readonly CompletedSite[]): boolean {
-  return sites.some((site) => footprintAt(site.tile, BUILDINGS[site.kind].footprint).some((other) => chebyshevDistance(tile, other) === 1));
+  return sites.some((site) => {
+    const def = BUILDINGS[site.kind];
+    if (def === undefined) return false;
+    return footprintAt(site.tile, def.footprint).some(
+      (other) => chebyshevDistance(tile, other) === 1,
+    );
+  });
 }
 
 function tooCloseToKnownLair(tile: TileCoord, lairs: readonly KnownLairSite[]): boolean {
