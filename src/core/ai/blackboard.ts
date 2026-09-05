@@ -35,5 +35,13 @@ export const SENSOR_PERIOD = {
 
 /** Tiles within which an enemy counts as a threat worth reacting to. */
 export const THREAT_RADIUS = 8;
-/** Tiles within which a hero notices a friendly building taking damage — §4. */
-export const DEFEND_NOTICE_RADIUS = 20;
+/**
+ * Tiles within which a hero notices a friendly building taking damage.
+ *
+ * Was 20, which is smaller than the distance heroes actually drift while exploring.
+ * A playtest found the kingdom being eaten — 20,683 ticks of building damage — while
+ * every hero stood 24 to 34 tiles away and never heard about it. A sacked palace has
+ * to be able to reach the people who are supposed to care about it, so this is a
+ * kingdom-wide alarm rather than a local one.
+ */
+export const DEFEND_NOTICE_RADIUS = 45;

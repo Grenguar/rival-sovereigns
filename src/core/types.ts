@@ -138,6 +138,16 @@ export interface Building {
   vault: number;
   spawnCooldown: number;
   footprint: TileCoord[];
+  /**
+   * Who is currently sacking this building, and when they last landed a blow.
+   *
+   * Buildings have no `combat` component — they never swing — so they had nowhere to
+   * record an attacker. DefendHome resolves its target from exactly this, which
+   * meant the goal could never find anyone to fight and heroes watched their
+   * kingdom burn from thirty tiles away.
+   */
+  lastAttacker: Handle;
+  lastAttackTick: number;
 }
 
 export interface Lair {

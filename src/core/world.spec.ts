@@ -57,6 +57,8 @@ describe('World entity pool', () => {
       vault: 0,
       spawnCooldown: 0,
       footprint: [],
+      lastAttacker: { index: -1, generation: -1 },
+      lastAttackTick: -1,
     };
     const first = w.views.buildings;
     expect(w.views.buildings).toBe(first); // same array instance, no rebuild

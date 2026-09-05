@@ -21,7 +21,7 @@ import { BUILDINGS } from '../content/buildings';
 import { HENCHMEN, LAIRS, MONSTERS } from '../content/monsters';
 import { createBlackboard } from './ai/blackboard';
 import { pickName } from '../content/names';
-import { FIRST_SPAWN_TICK } from '../content/balance';
+import { FIRST_RECRUIT_TICKS, FIRST_SPAWN_TICK } from '../content/balance';
 
 function attachAgent(e: Entity, classId: AgentKindId, name: string, traits: Traits): void {
   e.agent = {
@@ -176,8 +176,12 @@ export function createBuilding(
     progress: complete ? 1 : 0,
     level: 1,
     vault: 0,
-    spawnCooldown: def.spawnInterval,
+    // Spawning buildings open with a short fuse so the kingdom starts moving; the
+    // steady-state interval takes over from the second recruit onward.
+    spawnCooldown: def.spawns === null ? def.spawnInterval : FIRST_RECRUIT_TICKS,
     footprint,
+    lastAttacker: NULL_HANDLE,
+    lastAttackTick: -1,
   };
   // Placement changes walkability, so anyone holding a path across it repaths.
   w.topologyVersion++;

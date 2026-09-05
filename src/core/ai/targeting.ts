@@ -73,7 +73,7 @@ export function huntTarget(a: Agent, w: WorldView): Handle {
 /** Whoever is hitting the building, falling back to anything hostile nearby. */
 export function defendTarget(a: Agent, w: WorldView): Handle {
   const building = w.get(a.blackboard.damagedBuilding);
-  const attacker = building?.combat?.lastDamageFrom ?? NULL_HANDLE;
+  const attacker = building?.building?.lastAttacker ?? NULL_HANDLE;
   if (w.isAlive(attacker)) return attacker;
   return a.blackboard.visibleEnemies.find((h) => w.isAlive(h)) ?? NULL_HANDLE;
 }

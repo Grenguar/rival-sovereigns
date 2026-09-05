@@ -16,6 +16,7 @@ import {
   SATURATING,
 } from './curves.gen';
 import { requireAll, requireNone, merge } from './goap/state';
+import { DEFEND_NOTICE_RADIUS } from './blackboard';
 import { normalisedDistanceSq, norm01, ratio } from './utility';
 import {
   defendTarget,
@@ -35,11 +36,21 @@ import {
 
 /** Horizon past which distance stops mattering, in tiles. */
 const DISTANCE_HORIZON = 40;
-const DEFEND_HORIZON = 20;
+/**
+ * Must match the radius the threat sensor searches.
+ *
+ * They disagreed: the sensor reported a burning building 45 tiles away and the
+ * score then divided by a 20-tile horizon, so the distance term came out zero and
+ * multiplied the whole goal to nothing. Heroes could see the kingdom was on fire
+ * and still scored DefendHome at 0.0000.
+ */
+const DEFEND_HORIZON = DEFEND_NOTICE_RADIUS;
 /** Lairs are far by design, so hunting needs a horizon that spans the map. */
 const HUNT_HORIZON = 100;
 /** Monsters roam the whole map looking for something to break. */
 const MONSTER_HORIZON = 100;
+/** How far from home exploring stays worthwhile. */
+const EXPLORE_HORIZON = 45;
 
 function self(a: Agent, w: WorldView): Entity | null {
   return w.get(a.entity);
@@ -317,14 +328,24 @@ const Explore: GoalDef = {
       id: 'frontierDistance',
       family: INVERSE,
       trait: 'curiosity',
+      /**
+       * Measured from the hero's *guild*, not from the hero.
+       *
+       * Hero-relative distance makes Explore self-sustaining: walk to the frontier,
+       * reveal it, and the next frontier is one tile further, forever. Heroes
+       * drifted to the map edge and never came home. Anchoring on the guild means
+       * exploring is about expanding the kingdom's known world, so the further out
+       * a hero already is, the less another step outward is worth.
+       */
       input: (a, w) => {
-        const me = self(a, w);
         const frontier = a.blackboard.frontierTile;
-        if (me === null || frontier === null) return 1;
+        if (frontier === null) return 1;
+        const anchor = w.get(a.blackboard.homeGuild) ?? self(a, w);
+        if (anchor === null) return 1;
         return normalisedDistanceSq(
-          me.transform.x - frontier.tx,
-          me.transform.y - frontier.ty,
-          DISTANCE_HORIZON,
+          anchor.transform.x - frontier.tx,
+          anchor.transform.y - frontier.ty,
+          EXPLORE_HORIZON,
         );
       },
     },
@@ -332,10 +353,19 @@ const Explore: GoalDef = {
   ],
 };
 
-/** The floor. Always available, always low — docs/04-ai-spec.md §4. */
+/**
+ * The floor. Always available, always low — docs/04-ai-spec.md §4.
+ *
+ * The target is SAFE *and at the home guild*, not merely SAFE. With SAFE alone a
+ * hero standing anywhere safe already satisfies the goal, so the planner returns an
+ * empty plan and the hero stands still wherever it happens to be — usually far from
+ * home, where every other goal's distance term is zero and it is stuck for the rest
+ * of the mission. Requiring AT_HOME_GUILD makes the plan MoveToGuild, so an idle
+ * hero walks back into the part of the map where it can be useful again.
+ */
 const Idle: GoalDef = {
   id: 'Idle',
-  target: requireAll(S.SAFE),
+  target: merge(requireAll(S.SAFE), requireAll(S.AT_HOME_GUILD)),
   interruptible: false,
   classMultiplier: weights('Idle', 1.0),
   considerations: [{ id: 'floor', family: LINEAR, input: () => 0.05 }],

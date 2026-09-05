@@ -28,11 +28,15 @@ function benchmark(agentTarget: number, ticks: number) {
     createMonster(w, 'ratkin', { tx: 30 + (guard % 40), ty: 30 + ((guard * 7) % 40) });
   }
 
+  // Counted before the measured window, not after: heroes kill monsters during the
+  // run, so an end-of-run count reports a population the benchmark never had.
+  const agents = w.views.agents.length;
+
   const started = performance.now();
   for (let i = 0; i < ticks; i++) w.step();
   const elapsed = performance.now() - started;
 
-  return { w, msPerTick: elapsed / ticks, agents: w.views.agents.length };
+  return { w, msPerTick: elapsed / ticks, agents };
 }
 
 describe('performance', () => {
