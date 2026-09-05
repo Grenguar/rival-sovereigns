@@ -44,13 +44,41 @@ const TILE_H = 32;
  * declares the colour it should read as, and the tile whose top face is closest wins.
  * That is deterministic, and it is checkable by eye against the logged match.
  */
-const TERRAIN: { frame: string; rgb: [number, number, number] }[] = [
-  { frame: 'terrain_grass', rgb: [126, 189, 79] },
-  { frame: 'terrain_forest', rgb: [58, 110, 58] },
+interface TerrainTarget {
+  frame: string;
+  /** The colour to match a source tile against. */
+  rgb: [number, number, number];
+  /**
+   * Per-channel multiplier applied after selection.
+   *
+   * The Kenney pack has no dark green, so matching alone put forest at rgb(57,178,
+   * 108) against grass at rgb(102,195,135) — a third of the map invisible against
+   * another half of it. The art is CC0, so deriving a darker woodland tone from it
+   * is both allowed and the only way to make forest read.
+   */
+  adjust?: [number, number, number];
+}
+
+const TERRAIN: TerrainTarget[] = [
+  { frame: 'terrain_grass', rgb: [126, 200, 110] },
+  // Deliberately far from grass. The first pass picked two similar greens and the
+  // map's 29.6% forest was invisible against its 55% grass — a third of the terrain
+  // doing no work at all.
+  { frame: 'terrain_forest', rgb: [24, 78, 42], adjust: [0.42, 0.58, 0.44] },
   { frame: 'terrain_water', rgb: [78, 148, 206] },
-  { frame: 'terrain_rock', rgb: [140, 140, 145] },
+  // The closest match is a greenish grey that sits too near grass. Darkening it to
+  // slate separates it and reads more like stone than the source tile did.
+  { frame: 'terrain_rock', rgb: [140, 140, 145], adjust: [0.79, 0.68, 0.74] },
   { frame: 'terrain_road', rgb: [176, 148, 106] },
 ];
+
+/**
+ * Minimum squared colour distance between any two chosen terrain tiles.
+ *
+ * Terrain that a player cannot tell apart is terrain that does not exist, so this
+ * fails the build rather than shipping a map that reads as one flat colour.
+ */
+const MIN_SEPARATION_SQ = 6000;
 
 function listEntries(archive: string, pattern: RegExp): string[] {
   const out = execFileSync('unzip', ['-Z1', archive], { encoding: 'utf8', maxBuffer: 1 << 26 });
@@ -136,6 +164,17 @@ function resize(src: Png, w: number, h: number): Png {
   return { width: w, height: h, pixels };
 }
 
+/** Scales each colour channel in place, leaving alpha untouched. */
+function applyTint(png: Png, adjust: [number, number, number]): void {
+  for (let i = 0; i < png.pixels.length; i += 4) {
+    if ((png.pixels[i + 3] as number) === 0) continue;
+    for (let c = 0; c < 3; c++) {
+      const v = Math.round((png.pixels[i + c] as number) * (adjust[c] as number));
+      png.pixels[i + c] = v > 255 ? 255 : v < 0 ? 0 : v;
+    }
+  }
+}
+
 /** Mean opaque colour, used to match a tile against its intended terrain. */
 function meanColour(png: Png): [number, number, number] {
   let r = 0;
@@ -177,6 +216,7 @@ async function main(): Promise<void> {
   });
 
   const used = new Set<string>();
+  const chosen: { frame: string; colour: [number, number, number] }[] = [];
   for (const want of TERRAIN) {
     let best: (typeof candidates)[number] | null = null;
     let bestD = Number.POSITIVE_INFINITY;
@@ -193,10 +233,28 @@ async function main(): Promise<void> {
     used.add(best.entry);
 
     const tile = resize(best.face, TILE_W, TILE_H);
+    if (want.adjust !== undefined) applyTint(tile, want.adjust);
+    // Separation is checked on what actually ships, not on the source tile.
+    chosen.push({ frame: want.frame, colour: meanColour(tile) });
     await writeFile(join(OUT, `${want.frame}.png`), encodePng(tile));
     console.log(
-      `stage-b: ${want.frame} <- ${best.entry.split('/').pop()} rgb(${best.colour.join(',')})`,
+      `stage-b: ${want.frame} <- ${best.entry.split('/').pop()} rgb(${meanColour(tile).join(',')})`,
     );
+  }
+
+  // Every pair must be visibly different, or a whole terrain type is decorative.
+  for (let i = 0; i < chosen.length; i++) {
+    for (let j = i + 1; j < chosen.length; j++) {
+      const a = chosen[i] as (typeof chosen)[number];
+      const b = chosen[j] as (typeof chosen)[number];
+      const d = distance(a.colour, b.colour);
+      if (d < MIN_SEPARATION_SQ) {
+        throw new Error(
+          `stage-b: ${a.frame} and ${b.frame} are too similar to tell apart ` +
+            `(distance ${d}, minimum ${MIN_SEPARATION_SQ}). Pick more separated targets.`,
+        );
+      }
+    }
   }
 
   // Record where each frame came from. build-atlas.ts turns this into the runtime
