@@ -1,0 +1,193 @@
+import { Application, Container, Sprite } from 'pixi.js';
+import type { Texture } from 'pixi.js';
+import type { Entity, EntityId, Snapshot } from '../core/types';
+import { compareDepth, worldToScreen } from '../core/spatial/iso';
+import type { Camera } from './camera';
+import { interpolatePosition } from './interpolate';
+import { TerrainChunkCache } from './terrain';
+
+export type RenderLayerName = 'terrain' | 'fog' | 'buildings' | 'groundFx' | 'units' | 'overlays' | 'flags';
+
+export interface RenderLayers {
+  readonly terrain: Container;
+  readonly fog: Container;
+  /** Buildings and units deliberately share this layer to preserve depth interleaving. */
+  readonly buildings: Container;
+  readonly groundFx: Container;
+  readonly units: Container;
+  readonly overlays: Container;
+  readonly flags: Container;
+}
+
+export interface StageRendererOptions {
+  readonly canvas: HTMLCanvasElement;
+  readonly camera: Camera;
+  readonly width: number;
+  readonly height: number;
+}
+
+interface ManagedSprite {
+  readonly entityId: EntityId;
+  readonly sprite: Sprite;
+}
+
+/**
+ * Owns the Pixi scene graph only. It consumes snapshots and never reads a World,
+ * which keeps render timing and browser state out of the deterministic core.
+ */
+export class StageRenderer {
+  readonly app: Application;
+  readonly camera: Camera;
+  readonly layers: RenderLayers;
+  readonly terrain: TerrainChunkCache;
+  private readonly worldLayer = new Container();
+  private readonly sprites = new Map<EntityId, ManagedSprite>();
+  private readonly freeSprites: Sprite[] = [];
+
+  private constructor(app: Application, camera: Camera, layers: RenderLayers) {
+    this.app = app;
+    this.camera = camera;
+    this.layers = layers;
+    this.terrain = new TerrainChunkCache(app.renderer, layers.terrain);
+  }
+
+  static async create(options: StageRendererOptions): Promise<StageRenderer> {
+    const app = new Application();
+    await app.init({
+      canvas: options.canvas,
+      width: options.width,
+      height: options.height,
+      backgroundColor: 0x0b0d14,
+      antialias: false,
+      autoDensity: true,
+      resolution: 1,
+    });
+
+    const terrain = new Container();
+    const fog = new Container();
+    const depth = new Container({ sortableChildren: true });
+    const groundFx = new Container();
+    const overlays = new Container();
+    const flags = new Container();
+    const layers: RenderLayers = { terrain, fog, buildings: depth, groundFx, units: depth, overlays, flags };
+    const renderer = new StageRenderer(app, options.camera, layers);
+    // Ground effects sit beneath the shared building/unit depth layer so decals never
+    // make a moving unit look like it is walking through a wall.
+    renderer.worldLayer.addChild(terrain, fog, groundFx, depth, overlays, flags);
+    app.stage.addChild(renderer.worldLayer);
+    renderer.applyCamera();
+    return renderer;
+  }
+
+  resize(width: number, height: number): void {
+    this.app.renderer.resize(width, height);
+    this.camera.resize(width, height);
+    this.applyCamera();
+  }
+
+  /** Call once per visual frame after the simulation advances its fixed ticks. */
+  draw(snapshot: Snapshot, alpha: number, textureForFrame: (frame: number) => Texture): void {
+    const seen = new Set<EntityId>();
+    const ordered: Array<{ entity: Entity; managed: ManagedSprite; x: number; y: number }> = [];
+    for (const entity of snapshot.entities) {
+      if (!entity.alive || entity.renderable === undefined) continue;
+      seen.add(entity.id);
+      const position = interpolatePosition(entity.transform, entity.renderable, alpha);
+      const screen = worldToScreen(position.x, position.y);
+      const managed = this.acquire(entity, textureForFrame(entity.renderable.frame));
+      managed.sprite.visible = this.camera.containsWorld(screen.sx, screen.sy, 32);
+      managed.sprite.position.set(screen.sx, screen.sy);
+      managed.sprite.tint = entity.renderable.tint;
+      ordered.push({ entity, managed, x: position.x, y: position.y });
+    }
+
+    for (const [id, managed] of this.sprites) {
+      if (seen.has(id)) continue;
+      this.layers.buildings.removeChild(managed.sprite);
+      this.sprites.delete(id);
+      this.freeSprites.push(managed.sprite);
+    }
+
+    ordered.sort((a, b) => compareDepth({ x: a.x, y: a.y, id: a.entity.id }, { x: b.x, y: b.y, id: b.entity.id }));
+    for (let index = 0; index < ordered.length; index++) {
+      const item = ordered[index] as { managed: ManagedSprite };
+      this.layers.buildings.setChildIndex(item.managed.sprite, index);
+    }
+    this.applyCamera();
+  }
+
+  destroy(): void {
+    this.terrain.destroy();
+    this.sprites.clear();
+    this.freeSprites.length = 0;
+    this.app.destroy({ removeView: false }, { children: true, texture: false, textureSource: false });
+  }
+
+  private acquire(entity: Entity, texture: Texture): ManagedSprite {
+    const existing = this.sprites.get(entity.id);
+    if (existing !== undefined) {
+      existing.sprite.texture = texture;
+      return existing;
+    }
+    const sprite = this.freeSprites.pop() ?? new Sprite(texture);
+    sprite.texture = texture;
+    sprite.anchor.set(0.5, 1);
+    this.layers.buildings.addChild(sprite);
+    const managed = { entityId: entity.id, sprite };
+    this.sprites.set(entity.id, managed);
+    return managed;
+  }
+
+  private applyCamera(): void {
+    const origin = this.camera.worldToScreen(0, 0);
+    this.worldLayer.position.set(origin.x, origin.y);
+    this.worldLayer.scale.set(this.camera.zoom);
+  }
+}
+
+/** Pointer drag plus trackpad/wheel zoom. The returned disposer prevents leaked listeners. */
+export function attachCameraControls(canvas: HTMLCanvasElement, camera: Camera, onChange: () => void): () => void {
+  let activePointer: number | null = null;
+  let lastX = 0;
+  let lastY = 0;
+  const priorTouchAction = canvas.style.touchAction;
+  canvas.style.touchAction = 'none';
+
+  const down = (event: PointerEvent): void => {
+    activePointer = event.pointerId;
+    lastX = event.clientX;
+    lastY = event.clientY;
+    canvas.setPointerCapture(event.pointerId);
+  };
+  const move = (event: PointerEvent): void => {
+    if (activePointer !== event.pointerId) return;
+    camera.panBy(event.clientX - lastX, event.clientY - lastY);
+    lastX = event.clientX;
+    lastY = event.clientY;
+    onChange();
+  };
+  const up = (event: PointerEvent): void => {
+    if (activePointer !== event.pointerId) return;
+    activePointer = null;
+    if (canvas.hasPointerCapture(event.pointerId)) canvas.releasePointerCapture(event.pointerId);
+  };
+  const wheel = (event: WheelEvent): void => {
+    event.preventDefault();
+    const rect = canvas.getBoundingClientRect();
+    camera.zoomAt(event.deltaY < 0 ? 1.1 : 1 / 1.1, event.clientX - rect.left, event.clientY - rect.top);
+    onChange();
+  };
+  canvas.addEventListener('pointerdown', down);
+  canvas.addEventListener('pointermove', move);
+  canvas.addEventListener('pointerup', up);
+  canvas.addEventListener('pointercancel', up);
+  canvas.addEventListener('wheel', wheel, { passive: false });
+  return () => {
+    canvas.style.touchAction = priorTouchAction;
+    canvas.removeEventListener('pointerdown', down);
+    canvas.removeEventListener('pointermove', move);
+    canvas.removeEventListener('pointerup', up);
+    canvas.removeEventListener('pointercancel', up);
+    canvas.removeEventListener('wheel', wheel);
+  };
+}
