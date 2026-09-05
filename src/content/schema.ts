@@ -125,11 +125,69 @@ export const HenchmanDefSchema = z.object({
   replaceDelay: z.number().int().nonnegative(),
 });
 
+/**
+ * Hand-authored mission content. Terrain is row-major: `ty * width + tx`.
+ * Keeping this beside the other content schemas makes a malformed map fail at
+ * module load, before a simulation can silently treat it as a different world.
+ */
+export const TerrainSchema = z.enum(['grass', 'forest', 'water', 'rock', 'road']);
+
+const MapTileSchema = z.object({
+  tx: z.number().int().nonnegative(),
+  ty: z.number().int().nonnegative(),
+});
+
+const LandmarkSchema = z.object({
+  id: z.string().min(1),
+  kind: z.enum(['palace', 'ratkinWarren', 'goblinCamp']),
+  tile: MapTileSchema,
+});
+
+export const MissionMapSchema = z
+  .object({
+    id: z.string().min(1),
+    width: z.number().int().positive(),
+    height: z.number().int().positive(),
+    terrain: z.array(TerrainSchema),
+    landmarks: z.array(LandmarkSchema).min(1),
+    /** Tiles around the palace deliberately kept clear for the opening build-out. */
+    clearBuildRadius: z.number().int().positive(),
+  })
+  .superRefine((map, ctx) => {
+    if (map.terrain.length !== map.width * map.height) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['terrain'],
+        message: `must contain exactly width * height (${map.width * map.height}) tiles`,
+      });
+    }
+
+    const ids = new Set<string>();
+    for (const [index, landmark] of map.landmarks.entries()) {
+      if (ids.has(landmark.id)) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ['landmarks', index, 'id'],
+          message: 'must be unique',
+        });
+      }
+      ids.add(landmark.id);
+      if (landmark.tile.tx >= map.width || landmark.tile.ty >= map.height) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ['landmarks', index, 'tile'],
+          message: 'must be inside map bounds',
+        });
+      }
+    }
+  });
+
 export type ClassDef = z.infer<typeof ClassDefSchema>;
 export type BuildingDef = z.infer<typeof BuildingDefSchema>;
 export type MonsterDef = z.infer<typeof MonsterDefSchema>;
 export type LairDef = z.infer<typeof LairDefSchema>;
 export type HenchmanDef = z.infer<typeof HenchmanDefSchema>;
+export type MissionMap = z.infer<typeof MissionMapSchema>;
 
 /**
  * Validates one definition and throws with the content id in the message. A
@@ -141,7 +199,9 @@ export function parseDef<T>(schema: z.ZodType<T>, raw: unknown, what: string): T
   if (result.success) return result.data;
 
   const id =
-    typeof raw === 'object' && raw !== null && 'id' in raw ? String((raw as { id: unknown }).id) : '<no id>';
+    typeof raw === 'object' && raw !== null && 'id' in raw
+      ? String((raw as { id: unknown }).id)
+      : '<no id>';
   const issues = result.error.issues
     .map((i) => `  ${i.path.join('.') || '<root>'}: ${i.message}`)
     .join('\n');

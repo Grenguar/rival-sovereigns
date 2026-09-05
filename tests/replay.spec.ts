@@ -2,9 +2,9 @@ import { describe, expect, test } from 'vitest';
 import { World, replay } from '../src/core/world';
 import { hashWorld } from '../src/core/hash';
 import { GOLDEN_COMMAND_LOG, GOLDEN_SEED } from './golden';
+import { GOLDEN_REPLAY_HASH, GOLDEN_REPLAY_TICKS, goldenReplayHash } from './replay-runner';
 
-const TICKS = 10_000;
-
+const TICKS = GOLDEN_REPLAY_TICKS;
 describe('determinism', () => {
   test('identical seeds produce identical worlds', () => {
     const a = new World(GOLDEN_SEED);
@@ -41,5 +41,9 @@ describe('determinism', () => {
     const w = new World(GOLDEN_SEED);
     for (let i = 0; i < 500; i++) w.step();
     expect(hashWorld(w)).toBe(hashWorld(w));
+  });
+
+  test('the golden replay has its checked-in tick-10,000 hash', () => {
+    expect(goldenReplayHash()).toBe(GOLDEN_REPLAY_HASH);
   });
 });

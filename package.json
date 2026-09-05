@@ -18,6 +18,7 @@
     "credits": "tsx tools/gen-credits.ts",
     "credits:check": "tsx tools/gen-credits.ts --check",
     "test": "vitest run",
+    "test:cross-engine": "playwright test",
     "test:watch": "vitest",
     "lint": "eslint . && tsc --noEmit",
     "format": "prettier --write ."
@@ -30,6 +31,7 @@
   },
   "devDependencies": {
     "@eslint/js": "^9.17.0",
+    "@playwright/test": "^1.62.1",
     "@types/node": "^22.10.2",
     "@types/react": "^18.3.18",
     "@types/react-dom": "^18.3.5",

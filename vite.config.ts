@@ -11,5 +11,6 @@ export default defineConfig({
     globals: true,
     environment: 'node',
     include: ['tests/**/*.spec.ts', 'src/**/*.spec.ts'],
+    exclude: ['tests/**/*.playwright.spec.ts'],
   },
 });

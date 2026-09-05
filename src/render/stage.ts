@@ -8,7 +8,14 @@ import { GroundFxRenderer } from './fx';
 import { interpolatePosition } from './interpolate';
 import { TerrainChunkCache } from './terrain';
 
-export type RenderLayerName = 'terrain' | 'fog' | 'buildings' | 'groundFx' | 'units' | 'overlays' | 'flags';
+export interface TerrainMap {
+  readonly width: number;
+  readonly height: number;
+  readonly terrain: readonly string[];
+}
+
+export type RenderLayerName =
+  'terrain' | 'fog' | 'buildings' | 'groundFx' | 'units' | 'overlays' | 'flags';
 
 export interface RenderLayers {
   readonly terrain: Container;
@@ -74,7 +81,15 @@ export class StageRenderer {
     const groundFx = new Container();
     const overlays = new Container();
     const flags = new Container();
-    const layers: RenderLayers = { terrain, fog, buildings: depth, groundFx, units: depth, overlays, flags };
+    const layers: RenderLayers = {
+      terrain,
+      fog,
+      buildings: depth,
+      groundFx,
+      units: depth,
+      overlays,
+      flags,
+    };
     const renderer = new StageRenderer(app, options.camera, layers);
     // Ground effects sit beneath the shared building/unit depth layer so decals never
     // make a moving unit look like it is walking through a wall.
@@ -90,6 +105,33 @@ export class StageRenderer {
     this.applyCamera();
   }
 
+  /** Bakes a map once; topology changes can invalidate only their 16×16 chunk. */
+  setTerrain(map: TerrainMap, textureForTerrain: (terrain: string) => Texture): void {
+    const chunksX = Math.ceil(map.width / 16);
+    const chunksY = Math.ceil(map.height / 16);
+    for (let cy = 0; cy < chunksY; cy++) {
+      for (let cx = 0; cx < chunksX; cx++) {
+        const origin = worldToScreen(cx * 16, cy * 16);
+        this.terrain.ensure({ cx, cy }, origin.sx - 512, origin.sy);
+      }
+    }
+    this.terrain.rebuild((container, chunk) => {
+      const startX = chunk.cx * 16;
+      const startY = chunk.cy * 16;
+      for (let ty = startY; ty < Math.min(startY + 16, map.height); ty++) {
+        for (let tx = startX; tx < Math.min(startX + 16, map.width); tx++) {
+          const terrain = map.terrain[ty * map.width + tx];
+          if (terrain === undefined) continue;
+          const local = worldToScreen(tx - startX, ty - startY);
+          const sprite = new Sprite(textureForTerrain(terrain));
+          sprite.anchor.set(0.5, 0.5);
+          sprite.position.set(512 + local.sx, 16 + local.sy);
+          container.addChild(sprite);
+        }
+      }
+    });
+  }
+
   /** Call once per visual frame after the simulation advances its fixed ticks. */
   draw(snapshot: Snapshot, alpha: number, textureForFrame: (frame: number) => Texture): void {
     const seen = new Set<EntityId>();
@@ -103,7 +145,8 @@ export class StageRenderer {
       managed.sprite.visible = this.camera.containsWorld(screen.sx, screen.sy, 32);
       managed.sprite.position.set(screen.sx, screen.sy);
       managed.sprite.tint = entity.renderable.tint;
-      if (managed.layer === this.layers.buildings) ordered.push({ entity, managed, x: position.x, y: position.y });
+      if (managed.layer === this.layers.buildings)
+        ordered.push({ entity, managed, x: position.x, y: position.y });
     }
 
     for (const [id, managed] of this.sprites) {
@@ -113,7 +156,9 @@ export class StageRenderer {
       this.freeSprites.push(managed.sprite);
     }
 
-    ordered.sort((a, b) => compareDepth({ x: a.x, y: a.y, id: a.entity.id }, { x: b.x, y: b.y, id: b.entity.id }));
+    ordered.sort((a, b) =>
+      compareDepth({ x: a.x, y: a.y, id: a.entity.id }, { x: b.x, y: b.y, id: b.entity.id }),
+    );
     for (let index = 0; index < ordered.length; index++) {
       const item = ordered[index] as { managed: ManagedSprite };
       this.layers.buildings.setChildIndex(item.managed.sprite, index);
@@ -127,7 +172,10 @@ export class StageRenderer {
     this.fx.clear(this.layers.groundFx);
     this.sprites.clear();
     this.freeSprites.length = 0;
-    this.app.destroy({ removeView: false }, { children: true, texture: false, textureSource: false });
+    this.app.destroy(
+      { removeView: false },
+      { children: true, texture: false, textureSource: false },
+    );
   }
 
   private acquire(entity: Entity, texture: Texture): ManagedSprite {
@@ -163,14 +211,24 @@ export class StageRenderer {
       const dx = entity.transform.x - world.x;
       const dy = entity.transform.y - world.y;
       const squared = dx * dx + dy * dy;
-      if (squared < distance || (squared === distance && (winner === null || entity.id < winner.id))) { winner = entity; distance = squared; }
+      if (
+        squared < distance ||
+        (squared === distance && (winner === null || entity.id < winner.id))
+      ) {
+        winner = entity;
+        distance = squared;
+      }
     }
-    return distance <= 1.5 ? winner?.id ?? null : null;
+    return distance <= 1.5 ? (winner?.id ?? null) : null;
   }
 }
 
 /** Pointer drag plus trackpad/wheel zoom. The returned disposer prevents leaked listeners. */
-export function attachCameraControls(canvas: HTMLCanvasElement, camera: Camera, onChange: () => void): () => void {
+export function attachCameraControls(
+  canvas: HTMLCanvasElement,
+  camera: Camera,
+  onChange: () => void,
+): () => void {
   let activePointer: number | null = null;
   let lastX = 0;
   let lastY = 0;
@@ -193,12 +251,17 @@ export function attachCameraControls(canvas: HTMLCanvasElement, camera: Camera, 
   const up = (event: PointerEvent): void => {
     if (activePointer !== event.pointerId) return;
     activePointer = null;
-    if (canvas.hasPointerCapture(event.pointerId)) canvas.releasePointerCapture(event.pointerId);
+    if (canvas.hasPointerCapture(event.pointerId))
+      canvas.releasePointerCapture(event.pointerId);
   };
   const wheel = (event: WheelEvent): void => {
     event.preventDefault();
     const rect = canvas.getBoundingClientRect();
-    camera.zoomAt(event.deltaY < 0 ? 1.1 : 1 / 1.1, event.clientX - rect.left, event.clientY - rect.top);
+    camera.zoomAt(
+      event.deltaY < 0 ? 1.1 : 1 / 1.1,
+      event.clientX - rect.left,
+      event.clientY - rect.top,
+    );
     onChange();
   };
   canvas.addEventListener('pointerdown', down);
