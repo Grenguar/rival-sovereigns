@@ -170,7 +170,8 @@ describe('combat', () => {
     expect(b.entity.health!.hp).toBe(b.entity.health!.maxHp);
   });
 
-  test('a dead monster leaves its loot on the corpse for a rogue to take', () => {
+  test('monster loot goes to whoever made the kill', () => {
+    // docs/01-game-design.md §3.1: monster loot flows world -> hero on kill.
     const w = new World(3);
     const hero = makeHero(w, 'warrior', 0, 0);
     const ratkin = makeMonster(w, 'ratkin', 0, 0);
@@ -181,7 +182,24 @@ describe('combat', () => {
       w.tick++;
     }
     expect(ratkin.entity.alive).toBe(false);
-    expect(ratkin.entity.purse?.gold).toBe(MONSTERS.ratkin!.loot);
+    expect(hero.entity.purse?.gold).toBe(MONSTERS.ratkin!.loot);
+  });
+
+  test('a rogue takes a 60% premium on monster loot', () => {
+    // §4.3 — most of why the rogue is the class that chases money.
+    const kill = (classId: 'warrior' | 'rogue') => {
+      const w = new World(3);
+      const hero = makeHero(w, classId, 0, 0);
+      const ratkin = makeMonster(w, 'ratkin', 0, 0);
+      hero.entity.combat!.target = ratkin.entity.handle;
+      for (let t = 0; t < 400 && ratkin.entity.alive; t++) {
+        combatSystem(w);
+        w.tick++;
+      }
+      return hero.entity.purse!.gold;
+    };
+    expect(kill('rogue')).toBe(Math.floor(MONSTERS.ratkin!.loot * 1.6));
+    expect(kill('rogue')).toBeGreaterThan(kill('warrior'));
   });
 
   test('a kill awards xp and can level the killer up', () => {

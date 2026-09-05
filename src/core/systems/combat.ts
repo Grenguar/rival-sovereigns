@@ -9,7 +9,14 @@
 import type { World } from '../world';
 import type { Entity, EntityId } from '../types';
 import { NULL_HANDLE } from '../types';
-import { ARMOUR_TIERS, MIN_DAMAGE, PROGRESSION, WEAPON_TIERS, MAX_LEVEL } from '../../content/balance';
+import {
+  ARMOUR_TIERS,
+  MAX_LEVEL,
+  MIN_DAMAGE,
+  PROGRESSION,
+  ROGUE_LOOT_BONUS,
+  WEAPON_TIERS,
+} from '../../content/balance';
 import { MONSTERS } from '../../content/monsters';
 
 /** Base damage scaled by weapon tier and level. */
@@ -73,10 +80,15 @@ export function applyDamage(w: World, target: Entity, amount: number, from: Enti
 /** XP to the killer, and loot left on the corpse for whoever wants it. */
 function awardKill(w: World, victim: Entity, killer: Entity | null): void {
   const monster = MONSTERS[monsterKindOf(victim)];
-  if (monster !== undefined) {
-    // Loot stays on the body rather than teleporting into a purse — a rogue has to
-    // come and take it, which is the point of LootCorpse.
-    victim.purse = { gold: (victim.purse?.gold ?? 0) + monster.loot };
+  if (monster !== undefined && killer?.purse !== undefined) {
+    // Monster loot goes to whoever made the kill — docs/01-game-design.md §3.1.
+    // Rogues take a 60% premium on it (§4.3), which is most of why they are the
+    // class that chases money.
+    const bonus = killer.agent?.classId === 'rogue' ? 1 + ROGUE_LOOT_BONUS : 1;
+    const loot = Math.floor(monster.loot * bonus);
+    killer.purse.gold += loot;
+    w.goldCreated += loot;
+    w.emit({ t: 'GOLD', entity: killer.id, delta: loot, reason: 'loot' });
   }
 
   if (killer === null || killer.progression === undefined) return;

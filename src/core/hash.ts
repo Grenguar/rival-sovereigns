@@ -31,6 +31,9 @@ export class Hasher {
 export interface HashableWorld {
   readonly tick: number;
   readonly treasury: number;
+  readonly escrow: number;
+  /** Quantised: the rate is player-set in coarse steps, never a computed float. */
+  readonly taxRate: number;
   readonly rng: { snapshot(): number };
   entitiesInIdOrder(): Iterable<Entity>;
 }
@@ -39,6 +42,9 @@ export function hashWorld(w: HashableWorld): number {
   const h = new Hasher();
   h.mix(w.tick);
   h.mix(w.treasury);
+  h.mix(w.escrow);
+  // Tax rate drives effective loyalty, so it changes behaviour and must be hashed.
+  h.mix((w.taxRate * 1000) | 0);
   h.mix(w.rng.snapshot());
 
   for (const e of w.entitiesInIdOrder()) {

@@ -17,13 +17,29 @@ import {
 } from './curves.gen';
 import { requireAll, requireNone, merge } from './goap/state';
 import { normalisedDistanceSq, norm01, ratio } from './utility';
+import {
+  defendTarget,
+  henchmanTarget,
+  huntTarget,
+  normalisedDistanceTo,
+  structureTarget,
+} from './targeting';
 import { CLASSES } from '../../content/classes';
 import { MONSTERS } from '../../content/monsters';
-import { effectiveLoyalty, POTION_COST } from '../../content/balance';
+import {
+  ARMOUR_TIERS,
+  effectiveLoyalty,
+  POTION_COST,
+  WEAPON_TIERS,
+} from '../../content/balance';
 
 /** Horizon past which distance stops mattering, in tiles. */
 const DISTANCE_HORIZON = 40;
 const DEFEND_HORIZON = 20;
+/** Lairs are far by design, so hunting needs a horizon that spans the map. */
+const HUNT_HORIZON = 100;
+/** Monsters roam the whole map looking for something to break. */
+const MONSTER_HORIZON = 100;
 
 function self(a: Agent, w: WorldView): Entity | null {
   return w.get(a.entity);
@@ -60,17 +76,6 @@ function ownPowerRatio(a: Agent, w: WorldView): number {
   return 1 - dangerRatio(a, w);
 }
 
-function distanceToHandleSq(a: Agent, w: WorldView, horizon: number): number {
-  const me = self(a, w);
-  const target = w.get(a.blackboard.currentTarget);
-  if (me === null || target === null) return 1;
-  return normalisedDistanceSq(
-    me.transform.x - target.transform.x,
-    me.transform.y - target.transform.y,
-    horizon,
-  );
-}
-
 /** The bounty currently worth most to this agent, or null. */
 export function bestKnownFlag(a: Agent): { gold: number; tx: number; ty: number } | null {
   let best: { gold: number; tx: number; ty: number } | null = null;
@@ -79,6 +84,17 @@ export function bestKnownFlag(a: Agent): { gold: number; tx: number; ty: number 
     if (best === null || f.gold > best.gold) best = { gold: f.gold, tx: f.tile.tx, ty: f.tile.ty };
   }
   return best;
+}
+
+/** Price of the cheapest upgrade this hero has not yet bought, or null if maxed. */
+function nextUpgradeCost(a: Agent, w: WorldView): number | null {
+  const eq = self(a, w)?.equipment;
+  if (eq === undefined) return null;
+  const costs: number[] = [];
+  if (eq.weaponTier < 2) costs.push(WEAPON_TIERS[eq.weaponTier + 1]?.cost ?? 0);
+  if (eq.armourTier < 2) costs.push(ARMOUR_TIERS[eq.armourTier + 1]?.cost ?? 0);
+  if (costs.length === 0) return null;
+  return Math.min(...costs);
 }
 
 /** Goal weights for one kind, from content. Absent means unavailable. */
@@ -159,7 +175,11 @@ const Heal: GoalDef = {
 
 const ClaimBounty: GoalDef = {
   id: 'ClaimBounty',
-  target: requireAll(S.HAS_GOLD, S.BOUNTY_KNOWN),
+  // Only HAS_GOLD. BOUNTY_KNOWN is set by the flag sensor and no action can make it
+  // true, so naming it as a goal bit makes the goal structurally unplannable — the
+  // planner would search the whole action set and always return null.
+  // It remains a precondition of the ClaimBounty *action*, which is the right place.
+  target: requireAll(S.HAS_GOLD),
   interruptible: false,
   classMultiplier: weights('ClaimBounty'),
   considerations: [
@@ -201,11 +221,17 @@ const HuntMonster: GoalDef = {
   classMultiplier: weights('HuntMonster'),
   considerations: [
     { id: 'danger', family: INVERSE, trait: 'courage', input: dangerRatio },
-    { id: 'distance', family: INVERSE, input: (a, w) => distanceToHandleSq(a, w, DISTANCE_HORIZON) },
+    {
+      id: 'distance',
+      family: INVERSE,
+      // Resolved the same way binding will resolve it, so the score describes the
+      // thing the hero would actually go after.
+      input: (a, w) => normalisedDistanceTo(a, w, huntTarget(a, w), HUNT_HORIZON),
+    },
     {
       id: 'hasTarget',
       family: LINEAR,
-      input: (a, w) => (w.isAlive(a.blackboard.currentTarget) ? 1 : 0),
+      input: (a, w) => (w.isAlive(huntTarget(a, w)) ? 1 : 0),
     },
   ],
 };
@@ -233,16 +259,12 @@ const DefendHome: GoalDef = {
     {
       id: 'distance',
       family: INVERSE_STEEP,
-      input: (a, w) => {
-        const me = self(a, w);
-        const b = w.get(a.blackboard.damagedBuilding);
-        if (me === null || b === null) return 1;
-        return normalisedDistanceSq(
-          me.transform.x - b.transform.x,
-          me.transform.y - b.transform.y,
-          DEFEND_HORIZON,
-        );
-      },
+      input: (a, w) => normalisedDistanceTo(a, w, a.blackboard.damagedBuilding, DEFEND_HORIZON),
+    },
+    {
+      id: 'hasAttacker',
+      family: LINEAR,
+      input: (a, w) => (w.isAlive(defendTarget(a, w)) ? 1 : 0),
     },
   ],
 };
@@ -255,8 +277,22 @@ const Upgrade: GoalDef = {
   considerations: [
     {
       id: 'affordability',
+      // Against the price of the *next* upgrade, not a flat 400.
+      //
+      // Measuring gold/400 made a hero with 115 gold score Upgrade at 0.66 while the
+      // cheapest weapon costs 150, so the action's isValid failed and the plan came
+      // back null every time. Half of all null plans were this one consideration
+      // asking the wrong question — docs/04-ai-spec.md §11 tuning order, step 1.
       family: SATURATING,
-      input: (a, w) => ratio(self(a, w)?.purse?.gold ?? 0, 400),
+      input: (a, w) => {
+        const cost = nextUpgradeCost(a, w);
+        if (cost === null) return 0; // fully equipped
+        // Zero when it cannot actually be bought. HAS_GOLD only means "has 40, the
+        // price of a potion", so a hero with 80 gold passes that symbol while the
+        // cheapest weapon costs 150 — scoring it non-zero guarantees a null plan.
+        const gold = self(a, w)?.purse?.gold ?? 0;
+        return gold >= cost ? 1 : 0;
+      },
     },
     {
       id: 'gearTier',
@@ -313,11 +349,15 @@ const AttackStructure: GoalDef = {
   interruptible: false,
   classMultiplier: weights('AttackStructure', 0),
   considerations: [
-    { id: 'distance', family: INVERSE, input: (a, w) => distanceToHandleSq(a, w, DISTANCE_HORIZON) },
+    {
+      id: 'distance',
+      family: INVERSE,
+      input: (a, w) => normalisedDistanceTo(a, w, structureTarget(a, w), MONSTER_HORIZON),
+    },
     {
       id: 'hasTarget',
       family: LINEAR,
-      input: (a, w) => (w.isAlive(a.blackboard.currentTarget) ? 1 : 0),
+      input: (a, w) => (w.isAlive(structureTarget(a, w)) ? 1 : 0),
     },
   ],
 };
@@ -332,16 +372,15 @@ const AttackHenchman: GoalDef = {
   interruptible: false,
   classMultiplier: weights('AttackHenchman', 0),
   considerations: [
-    { id: 'distance', family: INVERSE, input: (a, w) => distanceToHandleSq(a, w, DISTANCE_HORIZON) },
     {
-      id: 'henchmanVisible',
+      id: 'distance',
+      family: INVERSE,
+      input: (a, w) => normalisedDistanceTo(a, w, henchmanTarget(a, w), MONSTER_HORIZON),
+    },
+    {
+      id: 'hasTarget',
       family: LINEAR,
-      input: (a, w) => {
-        for (const h of a.blackboard.visibleEnemies) {
-          if (w.get(h)?.fsm !== undefined) return 1;
-        }
-        return 0;
-      },
+      input: (a, w) => (w.isAlive(henchmanTarget(a, w)) ? 1 : 0),
     },
   ],
 };
