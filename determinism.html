@@ -1,0 +1,17 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Sovereign — determinism harness</title>
+  </head>
+  <body>
+    <pre id="out">running…</pre>
+    <script type="module">
+      import { runHarness } from '/src/harness/determinism.ts';
+      const result = runHarness();
+      // Playwright polls for this.
+      window.__DETERMINISM__ = result;
+      document.getElementById('out').textContent = JSON.stringify(result, null, 2);
+    </script>
+  </body>
+</html>

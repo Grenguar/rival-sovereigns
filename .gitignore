@@ -11,3 +11,9 @@ playwright-report/
 # Fetched third-party archives — tools/fetch-assets.ts re-downloads and
 # SHA-256 verifies these; the manifest is the checked-in source of truth.
 assets/vendor/
+
+# Playwright
+test-results/
+playwright-report/
+blob-report/
+.playwright/

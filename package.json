@@ -20,7 +20,9 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "lint": "eslint . && tsc --noEmit",
-    "format": "prettier --write ."
+    "format": "prettier --write .",
+    "test:e2e": "playwright test",
+    "test:all": "vitest run && playwright test"
   },
   "dependencies": {
     "pixi.js": "^8.6.6",
@@ -30,6 +32,7 @@
   },
   "devDependencies": {
     "@eslint/js": "^9.17.0",
+    "@playwright/test": "^1.62.1",
     "@types/node": "^22.10.2",
     "@types/react": "^18.3.18",
     "@types/react-dom": "^18.3.5",
