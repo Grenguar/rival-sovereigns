@@ -45,6 +45,16 @@ export type HenchmanKind = 'peasant' | 'taxCollector' | 'guard';
 
 export type MonsterKind = 'ratkin' | 'goblin' | 'goblinRaider';
 
+/**
+ * What an agent *is*, for goal weighting and action availability.
+ *
+ * Monsters run the same three-tier stack as heroes with different weights
+ * (docs/04-ai-spec.md §9), which is a large architectural saving. That only works if
+ * one type spans both, so goal multipliers and action class-gates key on this rather
+ * than on ClassId.
+ */
+export type AgentKindId = ClassId | MonsterKind;
+
 export type LairKind = 'ratkinWarren' | 'goblinCamp';
 
 export type BuildingKind =
@@ -202,13 +212,25 @@ export interface Consideration {
   readonly family: CurveFamily;
   /** When set, selects and blends curve variants by the agent's trait value. */
   readonly trait?: TraitId;
+  /**
+   * Flips the trait axis for this consideration: a *higher* trait produces a
+   * *weaker* response.
+   *
+   * Needed exactly once, and the exception is instructive. Everywhere else a high
+   * trait means "react more" — a greedy hero values the same bounty more, a curious
+   * one is less put off by distance. But Survive is the goal of *not* fighting, and
+   * courage must lower it, not raise it. Rather than invert the curve family and
+   * break the one-direction convention everywhere else, the trait axis flips here.
+   */
+  readonly traitInverted?: boolean;
 }
 
 export interface GoalDef {
   readonly id: GoalId;
   /** At most 5 — docs/04-ai-spec.md §5. */
   readonly considerations: readonly Consideration[];
-  readonly classMultiplier: Readonly<Record<ClassId, number>>;
+  /** Absent means the goal is unavailable to that kind; 1.0 is the neutral weight. */
+  readonly classMultiplier: Readonly<Partial<Record<AgentKindId, number>>>;
   /** The planner's target state for this goal. */
   readonly target: State;
   /** Survive and DefendHome re-score outside the stagger schedule. */
@@ -284,7 +306,7 @@ export interface ActionDef {
   readonly id: ActionId;
   readonly pre: State;
   readonly eff: State;
-  readonly classes: readonly ClassId[] | 'all';
+  readonly classes: readonly AgentKindId[] | 'all';
   cost(a: Agent, w: WorldView): number;
   /** Contextual gate checked during search — cheap, no world mutation. */
   isValid(a: Agent, w: WorldView): boolean;
@@ -327,6 +349,8 @@ export interface Blackboard {
   knownFlags: FlagKnowledge[];
   currentTarget: Handle;
   lastDamageFrom: Handle;
+  /** Nearest friendly building currently taking damage — DefendHome scores on it. */
+  damagedBuilding: Handle;
   frontierTile: TileCoord | null;
   /** Tick each sensor last ran, indexed by sensor id. */
   sensorDue: Record<string, number>;
@@ -341,7 +365,7 @@ export interface GoalSwitch {
 
 export interface Agent {
   entity: Handle;
-  classId: ClassId;
+  classId: AgentKindId;
   name: string;
   traits: Traits;
 
