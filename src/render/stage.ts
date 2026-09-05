@@ -1,6 +1,6 @@
 import { Application, Container, Sprite } from 'pixi.js';
 import type { Texture } from 'pixi.js';
-import type { Entity, EntityId, Snapshot } from '../core/types';
+import type { BuildingKind, Entity, EntityId, Snapshot, TileCoord } from '../core/types';
 import { compareDepth, screenToWorld, worldToScreen } from '../core/spatial/iso';
 import type { Camera } from './camera';
 import { FogRenderer } from './fog';
@@ -126,10 +126,30 @@ export class StageRenderer {
           const sprite = new Sprite(textureForTerrain(terrain));
           sprite.anchor.set(0.5, 0.5);
           sprite.position.set(512 + local.sx, 16 + local.sy);
+          if (terrain === 'grass') sprite.tint = grassTint(tx, ty);
           container.addChild(sprite);
         }
       }
     });
+  }
+
+  /** Converts a DOM canvas point to the nearest tile centre for build previews. */
+  tileAt(canvasX: number, canvasY: number): TileCoord {
+    const screen = this.camera.screenToWorld(canvasX, canvasY);
+    const world = screenToWorld(screen.x, screen.y);
+    return { tx: Math.round(world.x), ty: Math.round(world.y) };
+  }
+
+  /** Projects a tile for DOM overlays; labels intentionally remain outside Pixi. */
+  projectTile(tile: TileCoord): { x: number; y: number } | null {
+    const world = worldToScreen(tile.tx, tile.ty);
+    const point = this.camera.worldToScreen(world.sx, world.sy);
+    return point.x < 0 ||
+      point.y < 0 ||
+      point.x > this.app.renderer.width ||
+      point.y > this.app.renderer.height
+      ? null
+      : point;
   }
 
   /** Call once per visual frame after the simulation advances its fixed ticks. */
@@ -145,6 +165,18 @@ export class StageRenderer {
       managed.sprite.visible = this.camera.containsWorld(screen.sx, screen.sy, 32);
       managed.sprite.position.set(screen.sx, screen.sy);
       managed.sprite.tint = entity.renderable.tint;
+      if (entity.building !== undefined) {
+        managed.sprite.tint = buildingTint(entity.building.kind);
+        const scale =
+          entity.building.kind === 'palace'
+            ? 1.25
+            : entity.building.kind === 'guardhouse'
+              ? 0.78
+              : 1;
+        managed.sprite.scale.set(scale);
+      } else {
+        managed.sprite.scale.set(1);
+      }
       if (managed.layer === this.layers.buildings)
         ordered.push({ entity, managed, x: position.x, y: position.y });
     }
@@ -221,6 +253,27 @@ export class StageRenderer {
     }
     return distance <= 1.5 ? (winner?.id ?? null) : null;
   }
+}
+
+const GRASS_TINTS = [0xffffff, 0xf4fff1, 0xebf7df, 0xf8f0da, 0xe5f0d7] as const;
+
+function grassTint(tx: number, ty: number): number {
+  const hash = (Math.imul(tx, 73856093) ^ Math.imul(ty, 19349663)) >>> 0;
+  return GRASS_TINTS[hash % GRASS_TINTS.length] as number;
+}
+
+function buildingTint(kind: BuildingKind): number {
+  const tints: Record<BuildingKind, number> = {
+    palace: 0xffd47a,
+    warriorsGuild: 0xf17f72,
+    roguesGuild: 0xc996e8,
+    rangersLodge: 0x91d78a,
+    marketplace: 0xf1bf76,
+    blacksmith: 0xa9bdd2,
+    inn: 0xe7a1ad,
+    guardhouse: 0x9fcf9a,
+  };
+  return tints[kind];
 }
 
 /** Pointer drag plus trackpad/wheel zoom. The returned disposer prevents leaked listeners. */

@@ -18,4 +18,21 @@ test.describe('Pixi map surface', () => {
       .toBe(true);
     expect(errors).toEqual([]);
   });
+
+  test('mounts build and bounty controls instead of leaving the HUD as the only verb', async ({
+    page,
+  }) => {
+    await page.goto('/');
+
+    await page.getByRole('button', { name: 'Build', exact: true }).click();
+    await expect(page.getByRole('region', { name: 'Build menu' })).toBeVisible();
+    await expect(page.getByText('Choose a building first.')).toBeVisible();
+
+    await page.getByRole('button', { name: 'Attack bounty' }).click();
+    await expect(page.getByRole('button', { name: 'Explore bounty' })).toHaveAttribute(
+      'aria-pressed',
+      'false',
+    );
+    await expect(page.getByRole('button', { name: 'Pause game' })).toBeVisible();
+  });
 });
