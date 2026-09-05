@@ -5,7 +5,7 @@
     "license": "self-made",
     "author": "Rival Sovereigns contributors",
     "sourcePage": "tools/make-placeholders.ts",
-    "sha256": "2f35a16e3185539398156dc5a6ca205c800f003aea6940f36d8a733807aa210e"
+    "sha256": "983eeabbb3fda16ea8c1f0bd34bcbde87c6ca3822a960fe08ade86ebfc1ae645"
   },
   {
     "name": "stage-b-kenney-isometric-blocks",
@@ -21,6 +21,6 @@
       "terrain_rock",
       "terrain_water"
     ],
-    "sha256": "2f35a16e3185539398156dc5a6ca205c800f003aea6940f36d8a733807aa210e"
+    "sha256": "983eeabbb3fda16ea8c1f0bd34bcbde87c6ca3822a960fe08ade86ebfc1ae645"
   }
 ]

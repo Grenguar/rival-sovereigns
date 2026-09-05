@@ -160,10 +160,70 @@
         "h": 40
       }
     },
-    "goblinRaider_attack_s_00": {
+    "goblinCamp_damaged": {
       "frame": {
         "x": 786,
         "y": 2,
+        "w": 128,
+        "h": 112
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 128,
+        "h": 112
+      },
+      "sourceSize": {
+        "w": 128,
+        "h": 112
+      }
+    },
+    "goblinCamp_intact": {
+      "frame": {
+        "x": 2,
+        "y": 116,
+        "w": 128,
+        "h": 112
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 128,
+        "h": 112
+      },
+      "sourceSize": {
+        "w": 128,
+        "h": 112
+      }
+    },
+    "goblinCamp_rubble": {
+      "frame": {
+        "x": 132,
+        "y": 116,
+        "w": 128,
+        "h": 112
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 128,
+        "h": 112
+      },
+      "sourceSize": {
+        "w": 128,
+        "h": 112
+      }
+    },
+    "goblinRaider_attack_s_00": {
+      "frame": {
+        "x": 262,
+        "y": 116,
         "w": 32,
         "h": 48
       },
@@ -182,8 +242,8 @@
     },
     "goblinRaider_attack_s_01": {
       "frame": {
-        "x": 820,
-        "y": 2,
+        "x": 296,
+        "y": 116,
         "w": 32,
         "h": 48
       },
@@ -202,8 +262,8 @@
     },
     "goblinRaider_idle_s_00": {
       "frame": {
-        "x": 854,
-        "y": 2,
+        "x": 330,
+        "y": 116,
         "w": 32,
         "h": 48
       },
@@ -222,8 +282,8 @@
     },
     "goblinRaider_walk_s_00": {
       "frame": {
-        "x": 888,
-        "y": 2,
+        "x": 364,
+        "y": 116,
         "w": 32,
         "h": 48
       },
@@ -242,8 +302,8 @@
     },
     "goblinRaider_walk_s_01": {
       "frame": {
-        "x": 922,
-        "y": 2,
+        "x": 398,
+        "y": 116,
         "w": 32,
         "h": 48
       },
@@ -262,8 +322,8 @@
     },
     "goblinRaider_walk_s_02": {
       "frame": {
-        "x": 956,
-        "y": 2,
+        "x": 432,
+        "y": 116,
         "w": 32,
         "h": 48
       },
@@ -282,8 +342,8 @@
     },
     "goblinRaider_walk_s_03": {
       "frame": {
-        "x": 990,
-        "y": 2,
+        "x": 466,
+        "y": 116,
         "w": 32,
         "h": 48
       },
@@ -302,7 +362,7 @@
     },
     "goblin_attack_s_00": {
       "frame": {
-        "x": 2,
+        "x": 500,
         "y": 116,
         "w": 32,
         "h": 48
@@ -322,7 +382,7 @@
     },
     "goblin_attack_s_01": {
       "frame": {
-        "x": 36,
+        "x": 534,
         "y": 116,
         "w": 32,
         "h": 48
@@ -342,7 +402,7 @@
     },
     "goblin_idle_s_00": {
       "frame": {
-        "x": 70,
+        "x": 568,
         "y": 116,
         "w": 32,
         "h": 48
@@ -362,7 +422,7 @@
     },
     "goblin_walk_s_00": {
       "frame": {
-        "x": 104,
+        "x": 602,
         "y": 116,
         "w": 32,
         "h": 48
@@ -382,7 +442,7 @@
     },
     "goblin_walk_s_01": {
       "frame": {
-        "x": 138,
+        "x": 636,
         "y": 116,
         "w": 32,
         "h": 48
@@ -402,7 +462,7 @@
     },
     "goblin_walk_s_02": {
       "frame": {
-        "x": 172,
+        "x": 670,
         "y": 116,
         "w": 32,
         "h": 48
@@ -422,7 +482,147 @@
     },
     "goblin_walk_s_03": {
       "frame": {
-        "x": 206,
+        "x": 704,
+        "y": 116,
+        "w": 32,
+        "h": 48
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 32,
+        "h": 48
+      },
+      "sourceSize": {
+        "w": 32,
+        "h": 48
+      }
+    },
+    "guard_attack_s_00": {
+      "frame": {
+        "x": 738,
+        "y": 116,
+        "w": 32,
+        "h": 48
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 32,
+        "h": 48
+      },
+      "sourceSize": {
+        "w": 32,
+        "h": 48
+      }
+    },
+    "guard_attack_s_01": {
+      "frame": {
+        "x": 772,
+        "y": 116,
+        "w": 32,
+        "h": 48
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 32,
+        "h": 48
+      },
+      "sourceSize": {
+        "w": 32,
+        "h": 48
+      }
+    },
+    "guard_idle_s_00": {
+      "frame": {
+        "x": 806,
+        "y": 116,
+        "w": 32,
+        "h": 48
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 32,
+        "h": 48
+      },
+      "sourceSize": {
+        "w": 32,
+        "h": 48
+      }
+    },
+    "guard_walk_s_00": {
+      "frame": {
+        "x": 840,
+        "y": 116,
+        "w": 32,
+        "h": 48
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 32,
+        "h": 48
+      },
+      "sourceSize": {
+        "w": 32,
+        "h": 48
+      }
+    },
+    "guard_walk_s_01": {
+      "frame": {
+        "x": 874,
+        "y": 116,
+        "w": 32,
+        "h": 48
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 32,
+        "h": 48
+      },
+      "sourceSize": {
+        "w": 32,
+        "h": 48
+      }
+    },
+    "guard_walk_s_02": {
+      "frame": {
+        "x": 908,
+        "y": 116,
+        "w": 32,
+        "h": 48
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 32,
+        "h": 48
+      },
+      "sourceSize": {
+        "w": 32,
+        "h": 48
+      }
+    },
+    "guard_walk_s_03": {
+      "frame": {
+        "x": 942,
         "y": 116,
         "w": 32,
         "h": 48
@@ -442,126 +642,6 @@
     },
     "guardhouse_construction": {
       "frame": {
-        "x": 240,
-        "y": 116,
-        "w": 128,
-        "h": 112
-      },
-      "rotated": false,
-      "trimmed": false,
-      "spriteSourceSize": {
-        "x": 0,
-        "y": 0,
-        "w": 128,
-        "h": 112
-      },
-      "sourceSize": {
-        "w": 128,
-        "h": 112
-      }
-    },
-    "guardhouse_damaged": {
-      "frame": {
-        "x": 370,
-        "y": 116,
-        "w": 128,
-        "h": 112
-      },
-      "rotated": false,
-      "trimmed": false,
-      "spriteSourceSize": {
-        "x": 0,
-        "y": 0,
-        "w": 128,
-        "h": 112
-      },
-      "sourceSize": {
-        "w": 128,
-        "h": 112
-      }
-    },
-    "guardhouse_intact": {
-      "frame": {
-        "x": 500,
-        "y": 116,
-        "w": 128,
-        "h": 112
-      },
-      "rotated": false,
-      "trimmed": false,
-      "spriteSourceSize": {
-        "x": 0,
-        "y": 0,
-        "w": 128,
-        "h": 112
-      },
-      "sourceSize": {
-        "w": 128,
-        "h": 112
-      }
-    },
-    "guardhouse_rubble": {
-      "frame": {
-        "x": 630,
-        "y": 116,
-        "w": 128,
-        "h": 112
-      },
-      "rotated": false,
-      "trimmed": false,
-      "spriteSourceSize": {
-        "x": 0,
-        "y": 0,
-        "w": 128,
-        "h": 112
-      },
-      "sourceSize": {
-        "w": 128,
-        "h": 112
-      }
-    },
-    "inn_construction": {
-      "frame": {
-        "x": 760,
-        "y": 116,
-        "w": 128,
-        "h": 112
-      },
-      "rotated": false,
-      "trimmed": false,
-      "spriteSourceSize": {
-        "x": 0,
-        "y": 0,
-        "w": 128,
-        "h": 112
-      },
-      "sourceSize": {
-        "w": 128,
-        "h": 112
-      }
-    },
-    "inn_damaged": {
-      "frame": {
-        "x": 890,
-        "y": 116,
-        "w": 128,
-        "h": 112
-      },
-      "rotated": false,
-      "trimmed": false,
-      "spriteSourceSize": {
-        "x": 0,
-        "y": 0,
-        "w": 128,
-        "h": 112
-      },
-      "sourceSize": {
-        "w": 128,
-        "h": 112
-      }
-    },
-    "inn_intact": {
-      "frame": {
         "x": 2,
         "y": 230,
         "w": 128,
@@ -580,7 +660,7 @@
         "h": 112
       }
     },
-    "inn_rubble": {
+    "guardhouse_damaged": {
       "frame": {
         "x": 132,
         "y": 230,
@@ -600,7 +680,7 @@
         "h": 112
       }
     },
-    "marketplace_construction": {
+    "guardhouse_intact": {
       "frame": {
         "x": 262,
         "y": 230,
@@ -620,7 +700,7 @@
         "h": 112
       }
     },
-    "marketplace_damaged": {
+    "guardhouse_rubble": {
       "frame": {
         "x": 392,
         "y": 230,
@@ -640,7 +720,7 @@
         "h": 112
       }
     },
-    "marketplace_intact": {
+    "inn_construction": {
       "frame": {
         "x": 522,
         "y": 230,
@@ -660,7 +740,7 @@
         "h": 112
       }
     },
-    "marketplace_rubble": {
+    "inn_damaged": {
       "frame": {
         "x": 652,
         "y": 230,
@@ -680,7 +760,7 @@
         "h": 112
       }
     },
-    "palace_construction": {
+    "inn_intact": {
       "frame": {
         "x": 782,
         "y": 230,
@@ -700,7 +780,7 @@
         "h": 112
       }
     },
-    "palace_damaged": {
+    "inn_rubble": {
       "frame": {
         "x": 2,
         "y": 344,
@@ -720,7 +800,7 @@
         "h": 112
       }
     },
-    "palace_intact": {
+    "marketplace_construction": {
       "frame": {
         "x": 132,
         "y": 344,
@@ -740,7 +820,7 @@
         "h": 112
       }
     },
-    "palace_rubble": {
+    "marketplace_damaged": {
       "frame": {
         "x": 262,
         "y": 344,
@@ -760,149 +840,29 @@
         "h": 112
       }
     },
-    "ranger_attack_s_00": {
+    "marketplace_intact": {
       "frame": {
         "x": 392,
         "y": 344,
-        "w": 32,
-        "h": 48
+        "w": 128,
+        "h": 112
       },
       "rotated": false,
       "trimmed": false,
       "spriteSourceSize": {
         "x": 0,
         "y": 0,
-        "w": 32,
-        "h": 48
+        "w": 128,
+        "h": 112
       },
       "sourceSize": {
-        "w": 32,
-        "h": 48
+        "w": 128,
+        "h": 112
       }
     },
-    "ranger_attack_s_01": {
+    "marketplace_rubble": {
       "frame": {
-        "x": 426,
-        "y": 344,
-        "w": 32,
-        "h": 48
-      },
-      "rotated": false,
-      "trimmed": false,
-      "spriteSourceSize": {
-        "x": 0,
-        "y": 0,
-        "w": 32,
-        "h": 48
-      },
-      "sourceSize": {
-        "w": 32,
-        "h": 48
-      }
-    },
-    "ranger_idle_s_00": {
-      "frame": {
-        "x": 460,
-        "y": 344,
-        "w": 32,
-        "h": 48
-      },
-      "rotated": false,
-      "trimmed": false,
-      "spriteSourceSize": {
-        "x": 0,
-        "y": 0,
-        "w": 32,
-        "h": 48
-      },
-      "sourceSize": {
-        "w": 32,
-        "h": 48
-      }
-    },
-    "ranger_walk_s_00": {
-      "frame": {
-        "x": 494,
-        "y": 344,
-        "w": 32,
-        "h": 48
-      },
-      "rotated": false,
-      "trimmed": false,
-      "spriteSourceSize": {
-        "x": 0,
-        "y": 0,
-        "w": 32,
-        "h": 48
-      },
-      "sourceSize": {
-        "w": 32,
-        "h": 48
-      }
-    },
-    "ranger_walk_s_01": {
-      "frame": {
-        "x": 528,
-        "y": 344,
-        "w": 32,
-        "h": 48
-      },
-      "rotated": false,
-      "trimmed": false,
-      "spriteSourceSize": {
-        "x": 0,
-        "y": 0,
-        "w": 32,
-        "h": 48
-      },
-      "sourceSize": {
-        "w": 32,
-        "h": 48
-      }
-    },
-    "ranger_walk_s_02": {
-      "frame": {
-        "x": 562,
-        "y": 344,
-        "w": 32,
-        "h": 48
-      },
-      "rotated": false,
-      "trimmed": false,
-      "spriteSourceSize": {
-        "x": 0,
-        "y": 0,
-        "w": 32,
-        "h": 48
-      },
-      "sourceSize": {
-        "w": 32,
-        "h": 48
-      }
-    },
-    "ranger_walk_s_03": {
-      "frame": {
-        "x": 596,
-        "y": 344,
-        "w": 32,
-        "h": 48
-      },
-      "rotated": false,
-      "trimmed": false,
-      "spriteSourceSize": {
-        "x": 0,
-        "y": 0,
-        "w": 32,
-        "h": 48
-      },
-      "sourceSize": {
-        "w": 32,
-        "h": 48
-      }
-    },
-    "rangersLodge_construction": {
-      "frame": {
-        "x": 630,
+        "x": 522,
         "y": 344,
         "w": 128,
         "h": 112
@@ -920,9 +880,9 @@
         "h": 112
       }
     },
-    "rangersLodge_damaged": {
+    "palace_construction": {
       "frame": {
-        "x": 760,
+        "x": 652,
         "y": 344,
         "w": 128,
         "h": 112
@@ -940,9 +900,9 @@
         "h": 112
       }
     },
-    "rangersLodge_intact": {
+    "palace_damaged": {
       "frame": {
-        "x": 890,
+        "x": 782,
         "y": 344,
         "w": 128,
         "h": 112
@@ -960,7 +920,7 @@
         "h": 112
       }
     },
-    "rangersLodge_rubble": {
+    "palace_intact": {
       "frame": {
         "x": 2,
         "y": 458,
@@ -980,290 +940,10 @@
         "h": 112
       }
     },
-    "ratkin_attack_s_00": {
+    "palace_rubble": {
       "frame": {
         "x": 132,
         "y": 458,
-        "w": 32,
-        "h": 48
-      },
-      "rotated": false,
-      "trimmed": false,
-      "spriteSourceSize": {
-        "x": 0,
-        "y": 0,
-        "w": 32,
-        "h": 48
-      },
-      "sourceSize": {
-        "w": 32,
-        "h": 48
-      }
-    },
-    "ratkin_attack_s_01": {
-      "frame": {
-        "x": 166,
-        "y": 458,
-        "w": 32,
-        "h": 48
-      },
-      "rotated": false,
-      "trimmed": false,
-      "spriteSourceSize": {
-        "x": 0,
-        "y": 0,
-        "w": 32,
-        "h": 48
-      },
-      "sourceSize": {
-        "w": 32,
-        "h": 48
-      }
-    },
-    "ratkin_idle_s_00": {
-      "frame": {
-        "x": 200,
-        "y": 458,
-        "w": 32,
-        "h": 48
-      },
-      "rotated": false,
-      "trimmed": false,
-      "spriteSourceSize": {
-        "x": 0,
-        "y": 0,
-        "w": 32,
-        "h": 48
-      },
-      "sourceSize": {
-        "w": 32,
-        "h": 48
-      }
-    },
-    "ratkin_walk_s_00": {
-      "frame": {
-        "x": 234,
-        "y": 458,
-        "w": 32,
-        "h": 48
-      },
-      "rotated": false,
-      "trimmed": false,
-      "spriteSourceSize": {
-        "x": 0,
-        "y": 0,
-        "w": 32,
-        "h": 48
-      },
-      "sourceSize": {
-        "w": 32,
-        "h": 48
-      }
-    },
-    "ratkin_walk_s_01": {
-      "frame": {
-        "x": 268,
-        "y": 458,
-        "w": 32,
-        "h": 48
-      },
-      "rotated": false,
-      "trimmed": false,
-      "spriteSourceSize": {
-        "x": 0,
-        "y": 0,
-        "w": 32,
-        "h": 48
-      },
-      "sourceSize": {
-        "w": 32,
-        "h": 48
-      }
-    },
-    "ratkin_walk_s_02": {
-      "frame": {
-        "x": 302,
-        "y": 458,
-        "w": 32,
-        "h": 48
-      },
-      "rotated": false,
-      "trimmed": false,
-      "spriteSourceSize": {
-        "x": 0,
-        "y": 0,
-        "w": 32,
-        "h": 48
-      },
-      "sourceSize": {
-        "w": 32,
-        "h": 48
-      }
-    },
-    "ratkin_walk_s_03": {
-      "frame": {
-        "x": 336,
-        "y": 458,
-        "w": 32,
-        "h": 48
-      },
-      "rotated": false,
-      "trimmed": false,
-      "spriteSourceSize": {
-        "x": 0,
-        "y": 0,
-        "w": 32,
-        "h": 48
-      },
-      "sourceSize": {
-        "w": 32,
-        "h": 48
-      }
-    },
-    "rogue_attack_s_00": {
-      "frame": {
-        "x": 370,
-        "y": 458,
-        "w": 32,
-        "h": 48
-      },
-      "rotated": false,
-      "trimmed": false,
-      "spriteSourceSize": {
-        "x": 0,
-        "y": 0,
-        "w": 32,
-        "h": 48
-      },
-      "sourceSize": {
-        "w": 32,
-        "h": 48
-      }
-    },
-    "rogue_attack_s_01": {
-      "frame": {
-        "x": 404,
-        "y": 458,
-        "w": 32,
-        "h": 48
-      },
-      "rotated": false,
-      "trimmed": false,
-      "spriteSourceSize": {
-        "x": 0,
-        "y": 0,
-        "w": 32,
-        "h": 48
-      },
-      "sourceSize": {
-        "w": 32,
-        "h": 48
-      }
-    },
-    "rogue_idle_s_00": {
-      "frame": {
-        "x": 438,
-        "y": 458,
-        "w": 32,
-        "h": 48
-      },
-      "rotated": false,
-      "trimmed": false,
-      "spriteSourceSize": {
-        "x": 0,
-        "y": 0,
-        "w": 32,
-        "h": 48
-      },
-      "sourceSize": {
-        "w": 32,
-        "h": 48
-      }
-    },
-    "rogue_walk_s_00": {
-      "frame": {
-        "x": 472,
-        "y": 458,
-        "w": 32,
-        "h": 48
-      },
-      "rotated": false,
-      "trimmed": false,
-      "spriteSourceSize": {
-        "x": 0,
-        "y": 0,
-        "w": 32,
-        "h": 48
-      },
-      "sourceSize": {
-        "w": 32,
-        "h": 48
-      }
-    },
-    "rogue_walk_s_01": {
-      "frame": {
-        "x": 506,
-        "y": 458,
-        "w": 32,
-        "h": 48
-      },
-      "rotated": false,
-      "trimmed": false,
-      "spriteSourceSize": {
-        "x": 0,
-        "y": 0,
-        "w": 32,
-        "h": 48
-      },
-      "sourceSize": {
-        "w": 32,
-        "h": 48
-      }
-    },
-    "rogue_walk_s_02": {
-      "frame": {
-        "x": 540,
-        "y": 458,
-        "w": 32,
-        "h": 48
-      },
-      "rotated": false,
-      "trimmed": false,
-      "spriteSourceSize": {
-        "x": 0,
-        "y": 0,
-        "w": 32,
-        "h": 48
-      },
-      "sourceSize": {
-        "w": 32,
-        "h": 48
-      }
-    },
-    "rogue_walk_s_03": {
-      "frame": {
-        "x": 574,
-        "y": 458,
-        "w": 32,
-        "h": 48
-      },
-      "rotated": false,
-      "trimmed": false,
-      "spriteSourceSize": {
-        "x": 0,
-        "y": 0,
-        "w": 32,
-        "h": 48
-      },
-      "sourceSize": {
-        "w": 32,
-        "h": 48
-      }
-    },
-    "roguesGuild_construction": {
-      "frame": {
-        "x": 608,
-        "y": 458,
         "w": 128,
         "h": 112
       },
@@ -1280,7 +960,287 @@
         "h": 112
       }
     },
-    "roguesGuild_damaged": {
+    "peasant_attack_s_00": {
+      "frame": {
+        "x": 262,
+        "y": 458,
+        "w": 32,
+        "h": 48
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 32,
+        "h": 48
+      },
+      "sourceSize": {
+        "w": 32,
+        "h": 48
+      }
+    },
+    "peasant_attack_s_01": {
+      "frame": {
+        "x": 296,
+        "y": 458,
+        "w": 32,
+        "h": 48
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 32,
+        "h": 48
+      },
+      "sourceSize": {
+        "w": 32,
+        "h": 48
+      }
+    },
+    "peasant_idle_s_00": {
+      "frame": {
+        "x": 330,
+        "y": 458,
+        "w": 32,
+        "h": 48
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 32,
+        "h": 48
+      },
+      "sourceSize": {
+        "w": 32,
+        "h": 48
+      }
+    },
+    "peasant_walk_s_00": {
+      "frame": {
+        "x": 364,
+        "y": 458,
+        "w": 32,
+        "h": 48
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 32,
+        "h": 48
+      },
+      "sourceSize": {
+        "w": 32,
+        "h": 48
+      }
+    },
+    "peasant_walk_s_01": {
+      "frame": {
+        "x": 398,
+        "y": 458,
+        "w": 32,
+        "h": 48
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 32,
+        "h": 48
+      },
+      "sourceSize": {
+        "w": 32,
+        "h": 48
+      }
+    },
+    "peasant_walk_s_02": {
+      "frame": {
+        "x": 432,
+        "y": 458,
+        "w": 32,
+        "h": 48
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 32,
+        "h": 48
+      },
+      "sourceSize": {
+        "w": 32,
+        "h": 48
+      }
+    },
+    "peasant_walk_s_03": {
+      "frame": {
+        "x": 466,
+        "y": 458,
+        "w": 32,
+        "h": 48
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 32,
+        "h": 48
+      },
+      "sourceSize": {
+        "w": 32,
+        "h": 48
+      }
+    },
+    "ranger_attack_s_00": {
+      "frame": {
+        "x": 500,
+        "y": 458,
+        "w": 32,
+        "h": 48
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 32,
+        "h": 48
+      },
+      "sourceSize": {
+        "w": 32,
+        "h": 48
+      }
+    },
+    "ranger_attack_s_01": {
+      "frame": {
+        "x": 534,
+        "y": 458,
+        "w": 32,
+        "h": 48
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 32,
+        "h": 48
+      },
+      "sourceSize": {
+        "w": 32,
+        "h": 48
+      }
+    },
+    "ranger_idle_s_00": {
+      "frame": {
+        "x": 568,
+        "y": 458,
+        "w": 32,
+        "h": 48
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 32,
+        "h": 48
+      },
+      "sourceSize": {
+        "w": 32,
+        "h": 48
+      }
+    },
+    "ranger_walk_s_00": {
+      "frame": {
+        "x": 602,
+        "y": 458,
+        "w": 32,
+        "h": 48
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 32,
+        "h": 48
+      },
+      "sourceSize": {
+        "w": 32,
+        "h": 48
+      }
+    },
+    "ranger_walk_s_01": {
+      "frame": {
+        "x": 636,
+        "y": 458,
+        "w": 32,
+        "h": 48
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 32,
+        "h": 48
+      },
+      "sourceSize": {
+        "w": 32,
+        "h": 48
+      }
+    },
+    "ranger_walk_s_02": {
+      "frame": {
+        "x": 670,
+        "y": 458,
+        "w": 32,
+        "h": 48
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 32,
+        "h": 48
+      },
+      "sourceSize": {
+        "w": 32,
+        "h": 48
+      }
+    },
+    "ranger_walk_s_03": {
+      "frame": {
+        "x": 704,
+        "y": 458,
+        "w": 32,
+        "h": 48
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 32,
+        "h": 48
+      },
+      "sourceSize": {
+        "w": 32,
+        "h": 48
+      }
+    },
+    "rangersLodge_construction": {
       "frame": {
         "x": 738,
         "y": 458,
@@ -1300,7 +1260,7 @@
         "h": 112
       }
     },
-    "roguesGuild_intact": {
+    "rangersLodge_damaged": {
       "frame": {
         "x": 868,
         "y": 458,
@@ -1320,7 +1280,7 @@
         "h": 112
       }
     },
-    "roguesGuild_rubble": {
+    "rangersLodge_intact": {
       "frame": {
         "x": 2,
         "y": 572,
@@ -1340,10 +1300,590 @@
         "h": 112
       }
     },
-    "terrain_forest": {
+    "rangersLodge_rubble": {
       "frame": {
         "x": 132,
         "y": 572,
+        "w": 128,
+        "h": 112
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 128,
+        "h": 112
+      },
+      "sourceSize": {
+        "w": 128,
+        "h": 112
+      }
+    },
+    "ratkinWarren_damaged": {
+      "frame": {
+        "x": 262,
+        "y": 572,
+        "w": 128,
+        "h": 112
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 128,
+        "h": 112
+      },
+      "sourceSize": {
+        "w": 128,
+        "h": 112
+      }
+    },
+    "ratkinWarren_intact": {
+      "frame": {
+        "x": 392,
+        "y": 572,
+        "w": 128,
+        "h": 112
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 128,
+        "h": 112
+      },
+      "sourceSize": {
+        "w": 128,
+        "h": 112
+      }
+    },
+    "ratkinWarren_rubble": {
+      "frame": {
+        "x": 522,
+        "y": 572,
+        "w": 128,
+        "h": 112
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 128,
+        "h": 112
+      },
+      "sourceSize": {
+        "w": 128,
+        "h": 112
+      }
+    },
+    "ratkin_attack_s_00": {
+      "frame": {
+        "x": 652,
+        "y": 572,
+        "w": 32,
+        "h": 48
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 32,
+        "h": 48
+      },
+      "sourceSize": {
+        "w": 32,
+        "h": 48
+      }
+    },
+    "ratkin_attack_s_01": {
+      "frame": {
+        "x": 686,
+        "y": 572,
+        "w": 32,
+        "h": 48
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 32,
+        "h": 48
+      },
+      "sourceSize": {
+        "w": 32,
+        "h": 48
+      }
+    },
+    "ratkin_idle_s_00": {
+      "frame": {
+        "x": 720,
+        "y": 572,
+        "w": 32,
+        "h": 48
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 32,
+        "h": 48
+      },
+      "sourceSize": {
+        "w": 32,
+        "h": 48
+      }
+    },
+    "ratkin_walk_s_00": {
+      "frame": {
+        "x": 754,
+        "y": 572,
+        "w": 32,
+        "h": 48
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 32,
+        "h": 48
+      },
+      "sourceSize": {
+        "w": 32,
+        "h": 48
+      }
+    },
+    "ratkin_walk_s_01": {
+      "frame": {
+        "x": 788,
+        "y": 572,
+        "w": 32,
+        "h": 48
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 32,
+        "h": 48
+      },
+      "sourceSize": {
+        "w": 32,
+        "h": 48
+      }
+    },
+    "ratkin_walk_s_02": {
+      "frame": {
+        "x": 822,
+        "y": 572,
+        "w": 32,
+        "h": 48
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 32,
+        "h": 48
+      },
+      "sourceSize": {
+        "w": 32,
+        "h": 48
+      }
+    },
+    "ratkin_walk_s_03": {
+      "frame": {
+        "x": 856,
+        "y": 572,
+        "w": 32,
+        "h": 48
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 32,
+        "h": 48
+      },
+      "sourceSize": {
+        "w": 32,
+        "h": 48
+      }
+    },
+    "rogue_attack_s_00": {
+      "frame": {
+        "x": 890,
+        "y": 572,
+        "w": 32,
+        "h": 48
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 32,
+        "h": 48
+      },
+      "sourceSize": {
+        "w": 32,
+        "h": 48
+      }
+    },
+    "rogue_attack_s_01": {
+      "frame": {
+        "x": 924,
+        "y": 572,
+        "w": 32,
+        "h": 48
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 32,
+        "h": 48
+      },
+      "sourceSize": {
+        "w": 32,
+        "h": 48
+      }
+    },
+    "rogue_idle_s_00": {
+      "frame": {
+        "x": 958,
+        "y": 572,
+        "w": 32,
+        "h": 48
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 32,
+        "h": 48
+      },
+      "sourceSize": {
+        "w": 32,
+        "h": 48
+      }
+    },
+    "rogue_walk_s_00": {
+      "frame": {
+        "x": 2,
+        "y": 686,
+        "w": 32,
+        "h": 48
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 32,
+        "h": 48
+      },
+      "sourceSize": {
+        "w": 32,
+        "h": 48
+      }
+    },
+    "rogue_walk_s_01": {
+      "frame": {
+        "x": 36,
+        "y": 686,
+        "w": 32,
+        "h": 48
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 32,
+        "h": 48
+      },
+      "sourceSize": {
+        "w": 32,
+        "h": 48
+      }
+    },
+    "rogue_walk_s_02": {
+      "frame": {
+        "x": 70,
+        "y": 686,
+        "w": 32,
+        "h": 48
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 32,
+        "h": 48
+      },
+      "sourceSize": {
+        "w": 32,
+        "h": 48
+      }
+    },
+    "rogue_walk_s_03": {
+      "frame": {
+        "x": 104,
+        "y": 686,
+        "w": 32,
+        "h": 48
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 32,
+        "h": 48
+      },
+      "sourceSize": {
+        "w": 32,
+        "h": 48
+      }
+    },
+    "roguesGuild_construction": {
+      "frame": {
+        "x": 138,
+        "y": 686,
+        "w": 128,
+        "h": 112
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 128,
+        "h": 112
+      },
+      "sourceSize": {
+        "w": 128,
+        "h": 112
+      }
+    },
+    "roguesGuild_damaged": {
+      "frame": {
+        "x": 268,
+        "y": 686,
+        "w": 128,
+        "h": 112
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 128,
+        "h": 112
+      },
+      "sourceSize": {
+        "w": 128,
+        "h": 112
+      }
+    },
+    "roguesGuild_intact": {
+      "frame": {
+        "x": 398,
+        "y": 686,
+        "w": 128,
+        "h": 112
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 128,
+        "h": 112
+      },
+      "sourceSize": {
+        "w": 128,
+        "h": 112
+      }
+    },
+    "roguesGuild_rubble": {
+      "frame": {
+        "x": 528,
+        "y": 686,
+        "w": 128,
+        "h": 112
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 128,
+        "h": 112
+      },
+      "sourceSize": {
+        "w": 128,
+        "h": 112
+      }
+    },
+    "taxCollector_attack_s_00": {
+      "frame": {
+        "x": 658,
+        "y": 686,
+        "w": 32,
+        "h": 48
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 32,
+        "h": 48
+      },
+      "sourceSize": {
+        "w": 32,
+        "h": 48
+      }
+    },
+    "taxCollector_attack_s_01": {
+      "frame": {
+        "x": 692,
+        "y": 686,
+        "w": 32,
+        "h": 48
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 32,
+        "h": 48
+      },
+      "sourceSize": {
+        "w": 32,
+        "h": 48
+      }
+    },
+    "taxCollector_idle_s_00": {
+      "frame": {
+        "x": 726,
+        "y": 686,
+        "w": 32,
+        "h": 48
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 32,
+        "h": 48
+      },
+      "sourceSize": {
+        "w": 32,
+        "h": 48
+      }
+    },
+    "taxCollector_walk_s_00": {
+      "frame": {
+        "x": 760,
+        "y": 686,
+        "w": 32,
+        "h": 48
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 32,
+        "h": 48
+      },
+      "sourceSize": {
+        "w": 32,
+        "h": 48
+      }
+    },
+    "taxCollector_walk_s_01": {
+      "frame": {
+        "x": 794,
+        "y": 686,
+        "w": 32,
+        "h": 48
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 32,
+        "h": 48
+      },
+      "sourceSize": {
+        "w": 32,
+        "h": 48
+      }
+    },
+    "taxCollector_walk_s_02": {
+      "frame": {
+        "x": 828,
+        "y": 686,
+        "w": 32,
+        "h": 48
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 32,
+        "h": 48
+      },
+      "sourceSize": {
+        "w": 32,
+        "h": 48
+      }
+    },
+    "taxCollector_walk_s_03": {
+      "frame": {
+        "x": 862,
+        "y": 686,
+        "w": 32,
+        "h": 48
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 32,
+        "h": 48
+      },
+      "sourceSize": {
+        "w": 32,
+        "h": 48
+      }
+    },
+    "terrain_forest": {
+      "frame": {
+        "x": 896,
+        "y": 686,
         "w": 64,
         "h": 32
       },
@@ -1362,8 +1902,8 @@
     },
     "terrain_grass": {
       "frame": {
-        "x": 198,
-        "y": 572,
+        "x": 2,
+        "y": 800,
         "w": 64,
         "h": 32
       },
@@ -1382,8 +1922,8 @@
     },
     "terrain_road": {
       "frame": {
-        "x": 264,
-        "y": 572,
+        "x": 68,
+        "y": 800,
         "w": 64,
         "h": 32
       },
@@ -1402,8 +1942,8 @@
     },
     "terrain_rock": {
       "frame": {
-        "x": 330,
-        "y": 572,
+        "x": 134,
+        "y": 800,
         "w": 64,
         "h": 32
       },
@@ -1422,8 +1962,8 @@
     },
     "terrain_water": {
       "frame": {
-        "x": 396,
-        "y": 572,
+        "x": 200,
+        "y": 800,
         "w": 64,
         "h": 32
       },
@@ -1442,8 +1982,8 @@
     },
     "warrior_attack_s_00": {
       "frame": {
-        "x": 462,
-        "y": 572,
+        "x": 266,
+        "y": 800,
         "w": 32,
         "h": 48
       },
@@ -1462,8 +2002,8 @@
     },
     "warrior_attack_s_01": {
       "frame": {
-        "x": 496,
-        "y": 572,
+        "x": 300,
+        "y": 800,
         "w": 32,
         "h": 48
       },
@@ -1482,8 +2022,8 @@
     },
     "warrior_idle_s_00": {
       "frame": {
-        "x": 530,
-        "y": 572,
+        "x": 334,
+        "y": 800,
         "w": 32,
         "h": 48
       },
@@ -1502,8 +2042,8 @@
     },
     "warrior_walk_s_00": {
       "frame": {
-        "x": 564,
-        "y": 572,
+        "x": 368,
+        "y": 800,
         "w": 32,
         "h": 48
       },
@@ -1522,8 +2062,8 @@
     },
     "warrior_walk_s_01": {
       "frame": {
-        "x": 598,
-        "y": 572,
+        "x": 402,
+        "y": 800,
         "w": 32,
         "h": 48
       },
@@ -1542,8 +2082,8 @@
     },
     "warrior_walk_s_02": {
       "frame": {
-        "x": 632,
-        "y": 572,
+        "x": 436,
+        "y": 800,
         "w": 32,
         "h": 48
       },
@@ -1562,8 +2102,8 @@
     },
     "warrior_walk_s_03": {
       "frame": {
-        "x": 666,
-        "y": 572,
+        "x": 470,
+        "y": 800,
         "w": 32,
         "h": 48
       },
@@ -1582,8 +2122,8 @@
     },
     "warriorsGuild_construction": {
       "frame": {
-        "x": 700,
-        "y": 572,
+        "x": 504,
+        "y": 800,
         "w": 128,
         "h": 112
       },
@@ -1602,8 +2142,8 @@
     },
     "warriorsGuild_damaged": {
       "frame": {
-        "x": 830,
-        "y": 572,
+        "x": 634,
+        "y": 800,
         "w": 128,
         "h": 112
       },
@@ -1622,8 +2162,8 @@
     },
     "warriorsGuild_intact": {
       "frame": {
-        "x": 2,
-        "y": 686,
+        "x": 764,
+        "y": 800,
         "w": 128,
         "h": 112
       },
@@ -1642,8 +2182,8 @@
     },
     "warriorsGuild_rubble": {
       "frame": {
-        "x": 132,
-        "y": 686,
+        "x": 894,
+        "y": 800,
         "w": 128,
         "h": 112
       },

@@ -41,6 +41,19 @@ export class Camera {
     return { x: this.centerX, y: this.centerY, zoom: this._zoom, width: this.viewportWidth, height: this.viewportHeight };
   }
 
+  /**
+   * Centres the view on a screen-space point.
+   *
+   * The default is the middle of the map bounds, which on Mission 01 puts the
+   * player's kingdom off in a corner on load. Where the player's things are is not
+   * the same place as the middle of the world.
+   */
+  centerOn(screenX: number, screenY: number): void {
+    this.centerX = screenX;
+    this.centerY = screenY;
+    this.clamp();
+  }
+
   resize(width: number, height: number): void {
     this.viewportWidth = Math.max(1, width);
     this.viewportHeight = Math.max(1, height);
