@@ -1,0 +1,4 @@
+dist
+node_modules
+src/core/ai/curves.gen.ts
+src/render/frames.gen.ts
