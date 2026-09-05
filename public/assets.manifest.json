@@ -1,0 +1,10 @@
+[
+  {
+    "name": "stage-a-procedural-atlas",
+    "url": "self-made",
+    "license": "self-made",
+    "author": "Rival Sovereigns contributors",
+    "sourcePage": "tools/make-placeholders.ts",
+    "sha256": "ec34475ef008928455e52496f1c378f011b5f6eeef7eb00602b70485f3a43fdc"
+  }
+]
