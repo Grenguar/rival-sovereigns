@@ -1,8 +1,10 @@
 import { Application, Container, Sprite } from 'pixi.js';
 import type { Texture } from 'pixi.js';
 import type { Entity, EntityId, Snapshot } from '../core/types';
-import { compareDepth, worldToScreen } from '../core/spatial/iso';
+import { compareDepth, screenToWorld, worldToScreen } from '../core/spatial/iso';
 import type { Camera } from './camera';
+import { FogRenderer } from './fog';
+import { GroundFxRenderer } from './fx';
 import { interpolatePosition } from './interpolate';
 import { TerrainChunkCache } from './terrain';
 
@@ -29,6 +31,7 @@ export interface StageRendererOptions {
 interface ManagedSprite {
   readonly entityId: EntityId;
   readonly sprite: Sprite;
+  readonly layer: Container;
 }
 
 /**
@@ -40,6 +43,8 @@ export class StageRenderer {
   readonly camera: Camera;
   readonly layers: RenderLayers;
   readonly terrain: TerrainChunkCache;
+  readonly fog = new FogRenderer();
+  readonly fx = new GroundFxRenderer();
   private readonly worldLayer = new Container();
   private readonly sprites = new Map<EntityId, ManagedSprite>();
   private readonly freeSprites: Sprite[] = [];
@@ -98,12 +103,12 @@ export class StageRenderer {
       managed.sprite.visible = this.camera.containsWorld(screen.sx, screen.sy, 32);
       managed.sprite.position.set(screen.sx, screen.sy);
       managed.sprite.tint = entity.renderable.tint;
-      ordered.push({ entity, managed, x: position.x, y: position.y });
+      if (managed.layer === this.layers.buildings) ordered.push({ entity, managed, x: position.x, y: position.y });
     }
 
     for (const [id, managed] of this.sprites) {
       if (seen.has(id)) continue;
-      this.layers.buildings.removeChild(managed.sprite);
+      managed.layer.removeChild(managed.sprite);
       this.sprites.delete(id);
       this.freeSprites.push(managed.sprite);
     }
@@ -118,6 +123,8 @@ export class StageRenderer {
 
   destroy(): void {
     this.terrain.destroy();
+    this.fog.clear(this.layers.fog);
+    this.fx.clear(this.layers.groundFx);
     this.sprites.clear();
     this.freeSprites.length = 0;
     this.app.destroy({ removeView: false }, { children: true, texture: false, textureSource: false });
@@ -132,8 +139,9 @@ export class StageRenderer {
     const sprite = this.freeSprites.pop() ?? new Sprite(texture);
     sprite.texture = texture;
     sprite.anchor.set(0.5, 1);
-    this.layers.buildings.addChild(sprite);
-    const managed = { entityId: entity.id, sprite };
+    const layer = entity.kind === 'flag' ? this.layers.flags : this.layers.buildings;
+    layer.addChild(sprite);
+    const managed = { entityId: entity.id, sprite, layer };
     this.sprites.set(entity.id, managed);
     return managed;
   }
@@ -142,6 +150,22 @@ export class StageRenderer {
     const origin = this.camera.worldToScreen(0, 0);
     this.worldLayer.position.set(origin.x, origin.y);
     this.worldLayer.scale.set(this.camera.zoom);
+  }
+
+  /** Returns the nearest visible renderable under a canvas click, in tile units. */
+  pick(snapshot: Snapshot, canvasX: number, canvasY: number): EntityId | null {
+    const screen = this.camera.screenToWorld(canvasX, canvasY);
+    const world = screenToWorld(screen.x, screen.y);
+    let winner: Entity | null = null;
+    let distance = Number.POSITIVE_INFINITY;
+    for (const entity of snapshot.entities) {
+      if (!entity.alive || entity.renderable === undefined) continue;
+      const dx = entity.transform.x - world.x;
+      const dy = entity.transform.y - world.y;
+      const squared = dx * dx + dy * dy;
+      if (squared < distance || (squared === distance && (winner === null || entity.id < winner.id))) { winner = entity; distance = squared; }
+    }
+    return distance <= 1.5 ? winner?.id ?? null : null;
   }
 }
 
