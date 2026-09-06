@@ -20,3 +20,10 @@ blob-report/
 
 # Local run artefacts
 game-screenshot*.png
+
+# Research inputs are local-only. Record URLs, authors and licenses in tracked files
+# under art/reference/, but never commit raw captures by accident.
+art/reference/raw/
+
+# tsc -b incremental state
+tsconfig.tsbuildinfo

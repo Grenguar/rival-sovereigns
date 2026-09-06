@@ -13,8 +13,9 @@ export interface CameraView {
   readonly height: number;
 }
 
-const MIN_ZOOM = 0.5;
-const MAX_ZOOM = 2.5;
+/** Zoom limits. Exported so the UI can disable its own controls at the stops. */
+export const MIN_ZOOM = 0.5;
+export const MAX_ZOOM = 2.5;
 
 /** A screen-space camera; world-space conversion stays in core/spatial/iso.ts. */
 export class Camera {
@@ -64,6 +65,11 @@ export class Camera {
     this.centerX -= screenDx / this._zoom;
     this.centerY -= screenDy / this._zoom;
     this.clamp();
+  }
+
+  /** Zooms about the middle of the viewport — what a keyboard or a button means. */
+  zoomBy(factor: number): void {
+    this.zoomAt(factor, this.viewportWidth / 2, this.viewportHeight / 2);
   }
 
   zoomAt(factor: number, screenX: number, screenY: number): void {

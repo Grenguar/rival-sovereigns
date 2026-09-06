@@ -46,6 +46,75 @@ body,
   top: 12px;
   z-index: 40;
 }
+.rs-pause-banner {
+  align-items: center;
+  background: var(--rs-panel);
+  border: 1px solid var(--rs-outline);
+  box-shadow: 0 10px 28px rgb(0 0 0 / 42%);
+  color: var(--rs-ink);
+  display: flex;
+  font-family: var(--rs-sans);
+  gap: 14px;
+  padding: 8px 10px 8px 14px;
+  position: absolute;
+  right: 12px;
+  top: 88px;
+  z-index: 46;
+}
+.rs-pause-banner > span {
+  display: grid;
+  gap: 2px;
+}
+.rs-pause-banner strong {
+  font-family: var(--rs-serif);
+}
+.rs-game > .rs-minimap {
+  bottom: 12px;
+  position: absolute;
+  right: 12px;
+  z-index: 40;
+}
+.rs-minimap {
+  /* Position and stacking only. The Catalan skin further down owns the surface,
+     the frame and where on the rail this sits. */
+  border: 1px solid var(--rs-outline);
+  border-radius: 2px;
+  line-height: 0;
+  padding: var(--rs-space-1);
+}
+.rs-minimap__zoom {
+  display: flex;
+  gap: var(--rs-space-1);
+  padding-top: var(--rs-space-1);
+}
+.rs-minimap__zoom button {
+  background: var(--rs-panel-strong);
+  border: 1px solid var(--rs-outline);
+  border-radius: 2px;
+  color: var(--rs-ink);
+  cursor: pointer;
+  flex: 1;
+  font: 700 1.1rem Outfit, 'Trebuchet MS', sans-serif;
+  line-height: 1;
+  /* 44px is the smallest target this reliably hits with a thumb or a trackpad. */
+  min-height: 44px;
+}
+.rs-minimap__zoom button:hover {
+  border-color: var(--rs-focus);
+}
+.rs-minimap__canvas {
+  cursor: crosshair;
+  display: block;
+  height: 192px;
+  image-rendering: pixelated;
+  width: 192px;
+}
+@media (max-width: 760px) {
+  .rs-minimap__canvas {
+    height: 120px;
+    width: 120px;
+  }
+}
 .rs-game > .rs-action-bar {
   bottom: 12px;
   left: 12px;
@@ -106,9 +175,9 @@ body,
 .rs-world-label {
   position: absolute;
   transform: translate(-50%, -100%);
-  /* Wide enough for a full hero name. At 64px every name ellipsised to nothing,
-     so the labels were rendering and invisible. */
-  width: 150px;
+  /* Wide enough for a full hero name at the current type size. At 64px every name
+     ellipsised to nothing; at 150px the 14px names started clipping again. */
+  width: 200px;
 }
 .rs-health-bar {
   background: rgb(11 13 20 / 85%);
@@ -612,6 +681,503 @@ body,
   .rs-floater {
     animation-duration: 0ms !important;
     scroll-behavior: auto;
+    transition-duration: 0ms !important;
+  }
+}
+
+/* ── Council Ledger skin ───────────────────────────────────────────────────
+   The world stays dominant; chrome reads like dark forged iron surrounding a
+   warm Catalan civic ledger. Ornament is structural (double rules, seal dot),
+   never a wallpaper placed over play. */
+:root {
+  --rs-fog: #0a0d0c;
+  --rs-panel: rgb(24 28 26 / 96%);
+  --rs-panel-strong: #181c1a;
+  --rs-panel-soft: #242b27;
+  --rs-ink: #f4ead2;
+  --rs-muted: #c8bda5;
+  --rs-outline: #78684f;
+  --rs-outline-soft: rgb(164 139 94 / 38%);
+  --rs-gold: #d1a64c;
+  --rs-gold-bright: #f1d589;
+  --rs-prades: #a84c38;
+  --rs-glazed: #44705c;
+  --rs-sea: #34576a;
+  --rs-danger: #a33e34;
+  --rs-focus: #ffe39a;
+  --rs-motion-fast: 140ms;
+  --rs-serif: Georgia, 'Times New Roman', serif;
+  --rs-sans: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+
+.rs-game::after {
+  border: 1px solid rgb(226 194 124 / 24%);
+  box-shadow: inset 0 0 42px rgb(0 0 0 / 34%);
+  content: '';
+  inset: 5px;
+  pointer-events: none;
+  position: absolute;
+  z-index: 24;
+}
+
+.rs-game > .rs-hud {
+  left: 50%;
+  top: 10px;
+  transform: translateX(-50%);
+}
+
+.rs-hud {
+  align-items: center;
+  backdrop-filter: blur(8px);
+  border-color: var(--rs-outline);
+  border-radius: 2px;
+  box-shadow:
+    inset 0 0 0 1px rgb(240 210 143 / 9%),
+    0 10px 28px rgb(0 0 0 / 38%);
+  gap: 18px;
+  max-width: min(calc(100% - 32px), 930px);
+  min-height: 62px;
+  padding: 8px 14px;
+}
+
+.rs-hud::before,
+.rs-minimap::before,
+.rs-council-panel::before,
+.rs-inspector::before,
+.rs-action-bar::before,
+.rs-build-menu::before,
+.rs-flag-tool::before {
+  background: var(--rs-prades);
+  border: 2px solid var(--rs-gold-bright);
+  border-radius: 50%;
+  box-shadow: 0 0 0 2px var(--rs-panel-strong);
+  content: '';
+  height: 8px;
+  left: 8px;
+  position: absolute;
+  top: -5px;
+  width: 8px;
+}
+
+.rs-hud,
+.rs-minimap,
+.rs-council-panel,
+.rs-inspector,
+.rs-action-bar,
+.rs-build-menu,
+.rs-flag-tool {
+  position: relative;
+}
+
+.rs-hud__treasury strong {
+  color: var(--rs-gold-bright);
+  font-family: var(--rs-serif);
+  font-size: 1.42rem;
+}
+
+.rs-hud__treasury,
+.rs-tax-control {
+  min-width: 132px;
+}
+
+.rs-hud__stats {
+  min-width: 340px;
+}
+
+.rs-hud__stats div {
+  border-inline-start-color: var(--rs-outline-soft);
+}
+
+.rs-hud__stats dd,
+.rs-tax-control__value {
+  color: var(--rs-ink);
+  font-family: var(--rs-serif);
+}
+
+.rs-eyebrow {
+  color: var(--rs-gold);
+  font-family: var(--rs-sans);
+  font-size: 0.66rem;
+  letter-spacing: 0.14em;
+}
+
+.rs-subtle {
+  color: var(--rs-muted);
+  font-family: var(--rs-sans);
+}
+
+.rs-game > .rs-minimap {
+  bottom: auto;
+  left: 12px;
+  right: auto;
+  top: 88px;
+}
+
+.rs-minimap {
+  background:
+    linear-gradient(145deg, rgb(255 255 255 / 3%), transparent 36%),
+    var(--rs-panel);
+  border-color: var(--rs-outline);
+  box-shadow:
+    inset 0 0 0 1px rgb(240 210 143 / 9%),
+    0 10px 28px rgb(0 0 0 / 42%);
+  padding: 8px;
+  width: 208px;
+}
+
+.rs-minimap__heading {
+  align-items: baseline;
+  display: flex;
+  justify-content: space-between;
+  line-height: 1.2;
+  padding: 1px 1px 7px;
+}
+
+.rs-minimap__heading small {
+  color: var(--rs-muted);
+  font: 0.68rem var(--rs-sans);
+}
+
+.rs-minimap__canvas {
+  border: 1px solid #8f7b58;
+  box-shadow: inset 0 0 0 2px rgb(10 13 12 / 60%);
+  height: 192px;
+  width: 192px;
+}
+
+.rs-minimap__canvas:focus-visible,
+.rs-minimap__zoom button:focus-visible {
+  outline: 3px solid var(--rs-focus);
+  outline-offset: 3px;
+}
+
+.rs-minimap__zoom button {
+  background: linear-gradient(#2f3732, #202622);
+  border-color: var(--rs-outline);
+  color: var(--rs-gold-bright);
+  font-family: var(--rs-serif);
+  transition: background var(--rs-motion-fast), border-color var(--rs-motion-fast);
+}
+
+.rs-minimap__zoom button:hover {
+  background: var(--rs-glazed);
+  border-color: var(--rs-gold-bright);
+}
+
+.rs-game > .rs-council-panel {
+  left: 12px;
+  position: absolute;
+  top: 394px;
+  z-index: 40;
+}
+
+.rs-council-panel {
+  background:
+    linear-gradient(145deg, rgb(255 255 255 / 3%), transparent 40%),
+    var(--rs-panel);
+  border: 1px solid var(--rs-outline);
+  box-shadow:
+    inset 0 0 0 1px rgb(240 210 143 / 9%),
+    0 12px 32px rgb(0 0 0 / 42%);
+  box-sizing: border-box;
+  color: var(--rs-ink);
+  font-family: var(--rs-sans);
+  max-height: calc(100dvh - 480px);
+  min-height: 186px;
+  overflow-y: auto;
+  padding: 14px;
+  width: 208px;
+}
+
+.rs-council-panel__heading {
+  align-items: start;
+  border-bottom: 1px solid var(--rs-outline-soft);
+  display: flex;
+  gap: 8px;
+  justify-content: space-between;
+  padding-bottom: 10px;
+}
+
+.rs-council-panel h2 {
+  color: var(--rs-ink);
+  font: 700 1.12rem/1.1 var(--rs-serif);
+  margin: 3px 0 0;
+}
+
+.rs-council-panel__state {
+  color: var(--rs-muted);
+  font-size: 0.75rem;
+  margin: 10px 0;
+  text-transform: capitalize;
+}
+
+.rs-dossier-health > span {
+  display: flex;
+  font-size: 0.72rem;
+  justify-content: space-between;
+}
+
+.rs-dossier-health strong,
+.rs-dossier-stats dd {
+  color: var(--rs-gold-bright);
+  font-variant-numeric: tabular-nums;
+}
+
+.rs-dossier-health > div {
+  background: #0d100e;
+  border: 1px solid var(--rs-outline-soft);
+  height: 7px;
+  margin-top: 5px;
+  overflow: hidden;
+}
+
+.rs-dossier-health > div > span {
+  background: linear-gradient(90deg, var(--rs-prades), var(--rs-gold), #70976f);
+  display: block;
+  height: 100%;
+}
+
+.rs-dossier-stats {
+  display: grid;
+  gap: 5px;
+  margin: 12px 0;
+}
+
+.rs-dossier-stats div {
+  display: flex;
+  font-size: 0.72rem;
+  justify-content: space-between;
+}
+
+.rs-dossier-stats dt,
+.rs-dossier-stats dd {
+  margin: 0;
+}
+
+.rs-council-panel__actions {
+  display: grid;
+  gap: 6px;
+  margin-top: 12px;
+}
+
+.rs-dossier-action {
+  background: #252c27;
+  border: 1px solid var(--rs-outline);
+  color: var(--rs-ink);
+  cursor: pointer;
+  font: 700 0.77rem var(--rs-sans);
+  min-height: 44px;
+  padding: 8px 10px;
+  text-align: left;
+  transition: background var(--rs-motion-fast), border-color var(--rs-motion-fast);
+}
+
+.rs-dossier-action:hover,
+.rs-dossier-action:focus-visible {
+  background: var(--rs-glazed);
+  border-color: var(--rs-gold-bright);
+}
+
+.rs-dossier-action:focus-visible {
+  outline: 3px solid var(--rs-focus);
+  outline-offset: 2px;
+}
+
+.rs-dossier-action--accent {
+  border-inline-start: 4px solid var(--rs-gold);
+}
+
+.rs-dossier-action--danger {
+  border-inline-start: 4px solid var(--rs-prades);
+}
+
+.rs-dossier-warning {
+  color: #ffc3b6;
+  font-size: 0.72rem;
+  line-height: 1.35;
+  margin: 8px 0 0;
+}
+
+.rs-game > .rs-action-bar {
+  bottom: 12px;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.rs-action-bar {
+  background:
+    linear-gradient(180deg, rgb(255 255 255 / 4%), transparent),
+    var(--rs-panel);
+  border-color: var(--rs-outline);
+  box-shadow:
+    inset 0 0 0 1px rgb(240 210 143 / 9%),
+    0 10px 28px rgb(0 0 0 / 42%);
+  flex-wrap: nowrap;
+  max-width: calc(100% - 460px);
+  min-width: 600px;
+  padding: 7px;
+}
+
+.rs-action-bar .rs-button {
+  min-width: 112px;
+}
+
+.rs-action-bar .rs-button[aria-pressed='true'] {
+  background: var(--rs-gold-bright);
+  border-color: white;
+  box-shadow: inset 0 -3px 0 var(--rs-prades);
+}
+
+.rs-action-bar__cancel {
+  border-inline-start: 1px solid var(--rs-outline-soft);
+  color: var(--rs-ink);
+}
+
+.rs-button {
+  background: linear-gradient(#e2bd68, #bd8c34);
+  border-color: var(--rs-gold-bright);
+  color: #181c1a;
+  font-family: var(--rs-sans);
+  transition: filter var(--rs-motion-fast), background var(--rs-motion-fast), border-color var(--rs-motion-fast);
+}
+
+.rs-button--quiet {
+  background: linear-gradient(#303833, #222824);
+  border-color: var(--rs-outline);
+  color: var(--rs-ink);
+}
+
+.rs-button--quiet:hover:not(:disabled) {
+  background: var(--rs-glazed);
+  border-color: var(--rs-gold-bright);
+  filter: none;
+}
+
+.rs-game > .rs-build-menu,
+.rs-game > .rs-flag-tool {
+  bottom: 76px;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.rs-build-menu,
+.rs-flag-tool,
+.rs-inspector {
+  background:
+    linear-gradient(145deg, rgb(255 255 255 / 3%), transparent 38%),
+    var(--rs-panel);
+  border-color: var(--rs-outline);
+  box-shadow:
+    inset 0 0 0 1px rgb(240 210 143 / 9%),
+    0 16px 40px rgb(0 0 0 / 48%);
+}
+
+.rs-build-option {
+  background: #202622;
+  border-color: var(--rs-outline-soft);
+}
+
+.rs-build-option:hover:not(:disabled),
+.rs-build-option[aria-pressed='true'] {
+  background: #2f3d34;
+  border-color: var(--rs-gold-bright);
+}
+
+.rs-game > .rs-inspector {
+  right: 12px;
+  top: 88px;
+}
+
+.rs-inspector h2 {
+  font-family: var(--rs-serif);
+}
+
+.rs-icon-button {
+  min-height: 44px;
+  min-width: 44px;
+}
+
+@media (max-width: 1050px) {
+  .rs-hud__stats {
+    min-width: 280px;
+  }
+  .rs-action-bar {
+    max-width: calc(100% - 32px);
+    min-width: 0;
+  }
+  .rs-action-bar__hint {
+    display: none;
+  }
+}
+
+@media (max-width: 760px) {
+  .rs-game > .rs-hud {
+    left: 8px;
+    right: 8px;
+    top: 8px;
+    transform: none;
+  }
+  .rs-hud {
+    max-height: 118px;
+    max-width: none;
+    overflow-y: auto;
+  }
+  .rs-hud__stats {
+    min-width: 0;
+  }
+  .rs-game > .rs-minimap {
+    left: 8px;
+    top: 136px;
+  }
+  .rs-minimap {
+    width: 144px;
+  }
+  .rs-minimap__canvas {
+    height: 128px;
+    width: 128px;
+  }
+  .rs-minimap__heading small {
+    display: none;
+  }
+  .rs-game > .rs-council-panel {
+    bottom: 76px;
+    left: 8px;
+    top: auto;
+  }
+  .rs-council-panel {
+    max-height: 43dvh;
+    width: min(260px, calc(100vw - 16px));
+  }
+  .rs-game > .rs-inspector {
+    bottom: 76px;
+    left: 8px;
+    max-height: 52dvh;
+    right: auto;
+    top: auto;
+  }
+  .rs-action-bar {
+    gap: 4px;
+    overflow-x: auto;
+    width: calc(100% - 16px);
+  }
+  .rs-action-bar .rs-button {
+    flex: 0 0 auto;
+    min-width: 104px;
+  }
+  .rs-game > .rs-build-menu,
+  .rs-game > .rs-flag-tool {
+    bottom: 72px;
+    width: calc(100% - 16px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .rs-minimap *,
+  .rs-council-panel *,
+  .rs-action-bar *,
+  .rs-build-menu *,
+  .rs-flag-tool * {
+    animation-duration: 0ms !important;
     transition-duration: 0ms !important;
   }
 }

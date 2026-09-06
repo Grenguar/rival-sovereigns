@@ -3,6 +3,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { PLACEABLE } from './content/buildings';
 import { MISSION_01, terrainAt } from './content/maps/mission-01';
 import { createScenario, MISSION_01 as MISSION } from './core/scenario';
+import { fogAt, fogOf } from './core/systems/fog';
 import { worldToScreen } from './core/spatial/iso';
 import type {
   BuildingKind,
@@ -16,17 +17,21 @@ import type {
 import { TICK_MS } from './core/world';
 import { Camera } from './render/camera';
 import { spawnEventFx } from './render/event-fx';
+import type { FogView } from './render/fog';
 import { captureRenderablePositions, syncRenderables } from './render/frame-for';
 import { FRAME_NAMES, FRAMES } from './render/frames.gen';
+import { isShoreline, landscapeFrameName, terrainFrameName } from './render/landscape';
 import { attachCameraControls, StageRenderer } from './render/stage';
 import { ActionBar, flagKindForMode, type InteractionMode } from './ui/ActionBar';
 import { BuildMenu, type BuildingPlacement } from './ui/BuildMenu';
+import { CouncilPanel } from './ui/CouncilPanel';
 import { EndScreen } from './ui/EndScreen';
 import { EventOverlay } from './ui/EventOverlay';
 import { FlagLabels } from './ui/FlagLabels';
 import { FlagTool } from './ui/FlagTool';
 import { HeroInspector } from './ui/HeroInspector';
 import { Hud } from './ui/Hud';
+import { Minimap } from './ui/Minimap';
 import { WorldLabels } from './ui/WorldLabels';
 
 const BUILD_OPTIONS = PLACEABLE.map((building) => ({
@@ -77,7 +82,8 @@ export function App(): JSX.Element {
   const [placementTile, setPlacementTile] = useState<TileCoord | null>(null);
   const [flagTarget, setFlagTarget] = useState<Handle | TileCoord | null>(null);
   const [paused, setPaused] = useState(false);
-  const [, setCameraVersion] = useState(0);
+  const [cameraVersion, setCameraVersion] = useState(0);
+  const fogViewRef = useRef<FogView | null>(null);
   const setPause = (next: boolean): void => {
     pausedRef.current = next;
     setPaused(next);
@@ -153,16 +159,29 @@ export function App(): JSX.Element {
         if (frame === undefined) throw new Error(`no atlas frame at index ${String(index)}`);
         return frame;
       };
-      const terrainFrames: Record<string, keyof typeof FRAMES> = {
-        grass: 'terrain_grass',
-        forest: 'terrain_forest',
-        water: 'terrain_water',
-        rock: 'terrain_rock',
-        road: 'terrain_road',
-      };
-      renderer.setTerrain(MISSION_01, (terrain) =>
-        texture(FRAMES[terrainFrames[terrain] ?? 'terrain_grass']),
+      renderer.setTerrain(
+        MISSION_01,
+        (terrain, tx, ty) => texture(FRAMES[terrainFrameName(terrain, tx, ty)]),
+        (terrain, tx, ty) => {
+          const frame = landscapeFrameName(
+            terrain,
+            tx,
+            ty,
+            isShoreline(MISSION_01, tx, ty),
+          );
+          return frame === null ? null : texture(FRAMES[frame]);
+        },
       );
+      // The fog grid lives in world system state, not in the snapshot, so the view
+      // reads it live rather than the Snapshot contract growing a 9,216-byte field.
+      const fogView: FogView = fogViewRef.current = {
+        width: MISSION.width,
+        height: MISSION.height,
+        at: (tx, ty) => fogAt(fogOf(world.current, MISSION.width, MISSION.height), tx, ty),
+      };
+      // A terrain diamond tinted to black is exactly the shape a fog tile needs, and
+      // costs no atlas frame.
+      const fogTexture = texture(FRAMES.terrain_grass);
       stopControls = attachCameraControls(element, camera, () =>
         setCameraVersion((version) => version + 1),
       );
@@ -192,7 +211,10 @@ export function App(): JSX.Element {
           setSnapshot({ ...snap, events: [...frameEvents] });
         }
         syncRenderables(snap.entities, world.current.tick);
-        renderer?.draw(snap, pausedRef.current ? 0 : accumulator / TICK_MS, texture);
+        renderer?.draw(snap, pausedRef.current ? 0 : accumulator / TICK_MS, texture, {
+          view: fogView,
+          texture: fogTexture,
+        });
         frame = requestAnimationFrame(loop);
       };
       frame = requestAnimationFrame(loop);
@@ -205,6 +227,36 @@ export function App(): JSX.Element {
       renderer?.destroy();
     };
   }, []);
+
+  // cameraVersion only exists to re-read the camera after a pan or zoom; naming it
+  // in the dependency-free read below is what makes that explicit rather than magic.
+  void cameraVersion;
+  const zoom = rendererRef.current?.camera.zoom ?? 1;
+  const viewportBounds = rendererRef.current?.viewportTileBounds() ?? null;
+  const zoomBy = (factor: number): void => {
+    rendererRef.current?.camera.zoomBy(factor);
+    setCameraVersion((version) => version + 1);
+  };
+  const jumpTo = (tile: TileCoord): void => {
+    const renderer = rendererRef.current;
+    if (renderer === null) return;
+    const screen = worldToScreen(tile.tx, tile.ty);
+    renderer.camera.centerOn(screen.sx, screen.sy);
+    setCameraVersion((version) => version + 1);
+  };
+  const centerEntity = (entity: (typeof snapshot.entities)[number]): void => {
+    jumpTo({ tx: entity.transform.x, ty: entity.transform.y });
+  };
+  const buildNear = (entity: (typeof snapshot.entities)[number]): void => {
+    centerEntity(entity);
+    setMode('build');
+    setBuildKind(null);
+    setPlacementTile(null);
+  };
+  const attackTarget = (target: Handle): void => {
+    setMode('attack');
+    setFlagTarget(target);
+  };
 
   const placement = placementFor(snapshot, buildKind, placementTile);
   const placementPoint = placement.tile === null ? null : projectTile(placement.tile);
@@ -265,7 +317,8 @@ export function App(): JSX.Element {
           setPlacementTile(null);
           setFlagTarget(null);
         }}
-        onPause={() => setPause(true)}
+        onPause={() => setPause(!paused)}
+        paused={paused}
       />
       {mode === 'build' ? (
         <BuildMenu
@@ -295,7 +348,29 @@ export function App(): JSX.Element {
       ) : null}
       <FlagLabels projectTile={projectTile} snapshot={snapshot} />
       <EventOverlay projectEntity={projectEntity} snapshot={snapshot} />
-      <WorldLabels projectEntity={projectEntity} selectedId={selected} snapshot={snapshot} />
+      <Minimap
+        fog={fogViewRef.current}
+        map={MISSION_01}
+        onJump={jumpTo}
+        onZoom={zoomBy}
+        snapshot={snapshot}
+        viewport={viewportBounds}
+      />
+      <CouncilPanel
+        onAttackTarget={attackTarget}
+        onBuildNearby={buildNear}
+        onCenter={centerEntity}
+        onCommand={issue}
+        onDismiss={() => setSelected(null)}
+        selectedId={selected}
+        snapshot={snapshot}
+      />
+      <WorldLabels
+        projectEntity={projectEntity}
+        selectedId={selected}
+        snapshot={snapshot}
+        zoom={zoom}
+      />
       <HeroInspector
         snapshot={snapshot}
         selectedHeroId={selected}

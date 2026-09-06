@@ -9,6 +9,7 @@ export interface ActionBarProps {
   readonly onModeChange: (mode: InteractionMode) => void;
   readonly onBuildKindChange: (kind: BuildingKind | null) => void;
   readonly onPause: () => void;
+  readonly paused: boolean;
 }
 
 export function flagKindForMode(mode: InteractionMode): FlagKind | null {
@@ -21,6 +22,7 @@ export function ActionBar({
   onModeChange,
   onBuildKindChange,
   onPause,
+  paused,
 }: ActionBarProps): JSX.Element {
   return (
     <nav aria-label="Kingdom actions" className="rs-action-bar">
@@ -49,12 +51,13 @@ export function ActionBar({
         Explore bounty
       </button>
       <button
-        aria-label="Pause game"
+        aria-label={paused ? 'Resume game' : 'Pause game'}
+        aria-pressed={paused}
         className="rs-button rs-button--quiet"
         onClick={onPause}
         type="button"
       >
-        Pause
+        {paused ? 'Resume' : 'Pause'}
       </button>
       {mode === 'build' && buildKind === null ? (
         <span className="rs-action-bar__hint">Choose a building, then click a tile.</span>

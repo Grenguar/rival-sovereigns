@@ -3,7 +3,7 @@ import type { Texture } from 'pixi.js';
 import type { Entity, EntityId, Snapshot, TileCoord } from '../core/types';
 import { compareDepth, screenToWorld, worldToScreen } from '../core/spatial/iso';
 import type { Camera } from './camera';
-import { FogRenderer } from './fog';
+import { FogRenderer, isEntityVisible, type FogTile, type FogView } from './fog';
 import { MIRRORED_FACINGS } from './frame-for';
 import { GroundFxRenderer, type GroundFxKind } from './fx';
 import { interpolatePosition } from './interpolate';
@@ -16,10 +16,18 @@ export interface TerrainMap {
 }
 
 export type RenderLayerName =
-  'terrain' | 'fog' | 'buildings' | 'groundFx' | 'units' | 'overlays' | 'flags';
+  | 'terrain'
+  | 'landscape'
+  | 'fog'
+  | 'buildings'
+  | 'groundFx'
+  | 'units'
+  | 'overlays'
+  | 'flags';
 
 export interface RenderLayers {
   readonly terrain: Container;
+  readonly landscape: Container;
   readonly fog: Container;
   /** Buildings and units deliberately share this layer to preserve depth interleaving. */
   readonly buildings: Container;
@@ -56,6 +64,7 @@ export class StageRenderer {
   private readonly worldLayer = new Container();
   private readonly sprites = new Map<EntityId, ManagedSprite>();
   private readonly freeSprites: Sprite[] = [];
+  private lastFogSync = '';
 
   private constructor(app: Application, camera: Camera, layers: RenderLayers) {
     this.app = app;
@@ -77,6 +86,7 @@ export class StageRenderer {
     });
 
     const terrain = new Container();
+    const landscape = new Container({ sortableChildren: true });
     const fog = new Container();
     const depth = new Container({ sortableChildren: true });
     const groundFx = new Container();
@@ -84,6 +94,7 @@ export class StageRenderer {
     const flags = new Container();
     const layers: RenderLayers = {
       terrain,
+      landscape,
       fog,
       buildings: depth,
       groundFx,
@@ -94,7 +105,7 @@ export class StageRenderer {
     const renderer = new StageRenderer(app, options.camera, layers);
     // Ground effects sit beneath the shared building/unit depth layer so decals never
     // make a moving unit look like it is walking through a wall.
-    renderer.worldLayer.addChild(terrain, fog, groundFx, depth, overlays, flags);
+    renderer.worldLayer.addChild(terrain, landscape, fog, groundFx, depth, overlays, flags);
     app.stage.addChild(renderer.worldLayer);
     renderer.applyCamera();
     return renderer;
@@ -107,7 +118,12 @@ export class StageRenderer {
   }
 
   /** Bakes a map once; topology changes can invalidate only their 16×16 chunk. */
-  setTerrain(map: TerrainMap, textureForTerrain: (terrain: string) => Texture): void {
+  setTerrain(
+    map: TerrainMap,
+    textureForTerrain: (terrain: string, tx: number, ty: number) => Texture,
+    decorationForTerrain?: (terrain: string, tx: number, ty: number) => Texture | null,
+  ): void {
+    for (const child of this.layers.landscape.removeChildren()) child.destroy();
     const chunksX = Math.ceil(map.width / 16);
     const chunksY = Math.ceil(map.height / 16);
     for (let cy = 0; cy < chunksY; cy++) {
@@ -124,11 +140,19 @@ export class StageRenderer {
           const terrain = map.terrain[ty * map.width + tx];
           if (terrain === undefined) continue;
           const local = worldToScreen(tx - startX, ty - startY);
-          const sprite = new Sprite(textureForTerrain(terrain));
+          const sprite = new Sprite(textureForTerrain(terrain, tx, ty));
           sprite.anchor.set(0.5, 0.5);
           sprite.position.set(512 + local.sx, 16 + local.sy);
-          if (terrain === 'grass') sprite.tint = grassTint(tx, ty);
           container.addChild(sprite);
+          const decoration = decorationForTerrain?.(terrain, tx, ty) ?? null;
+          if (decoration !== null) {
+            const prop = new Sprite(decoration);
+            const world = worldToScreen(tx, ty);
+            prop.anchor.set(0.5, 1);
+            prop.position.set(world.sx, world.sy);
+            prop.zIndex = tx + ty;
+            this.layers.landscape.addChild(prop);
+          }
         }
       }
     });
@@ -154,6 +178,59 @@ export class StageRenderer {
   }
 
   /**
+   * The fog tiles worth mounting a sprite for: those the camera can actually see.
+   *
+   * The grid is 9,216 tiles and most of a fresh map is unseen, so syncing all of it
+   * would put thousands of sprites on the stage to draw a few hundred. The four
+   * viewport corners project back to a tile-space bounding box.
+   */
+  /**
+   * The tile-space bounding box the camera currently covers.
+   *
+   * Under the isometric projection a rectangular viewport is a diamond in tile
+   * space, so this is the box around that diamond — deliberately generous. The
+   * minimap draws it and the fog sync iterates it.
+   */
+  viewportTileBounds(): { minTx: number; minTy: number; maxTx: number; maxTy: number } {
+    const corners = [
+      [0, 0],
+      [this.app.renderer.width, 0],
+      [0, this.app.renderer.height],
+      [this.app.renderer.width, this.app.renderer.height],
+    ] as const;
+    let minTx = Infinity;
+    let maxTx = -Infinity;
+    let minTy = Infinity;
+    let maxTy = -Infinity;
+    for (const [px, py] of corners) {
+      const stage = this.camera.screenToWorld(px, py);
+      const tile = screenToWorld(stage.x, stage.y);
+      minTx = Math.min(minTx, tile.x);
+      maxTx = Math.max(maxTx, tile.x);
+      minTy = Math.min(minTy, tile.y);
+      maxTy = Math.max(maxTy, tile.y);
+    }
+    return { minTx, minTy, maxTx, maxTy };
+  }
+
+  private visibleFog(view: FogView): FogTile[] {
+    const { minTx, minTy, maxTx, maxTy } = this.viewportTileBounds();
+    const tiles: FogTile[] = [];
+    const x0 = Math.max(0, Math.floor(minTx) - 1);
+    const x1 = Math.min(view.width - 1, Math.ceil(maxTx) + 1);
+    const y0 = Math.max(0, Math.floor(minTy) - 1);
+    const y1 = Math.min(view.height - 1, Math.ceil(maxTy) + 1);
+    for (let ty = y0; ty <= y1; ty++) {
+      for (let tx = x0; tx <= x1; tx++) {
+        const state = view.at(tx, ty);
+        if (state === 2) continue;
+        tiles.push({ tile: { tx, ty }, state });
+      }
+    }
+    return tiles;
+  }
+
+  /**
    * Spawns a ground effect at a world tile. Purely cosmetic: the effect's
    * lifetime is wall-clock and never re-enters the simulation.
    */
@@ -163,12 +240,40 @@ export class StageRenderer {
   }
 
   /** Call once per visual frame after the simulation advances its fixed ticks. */
-  draw(snapshot: Snapshot, alpha: number, textureForFrame: (frame: number) => Texture): void {
+  draw(
+    snapshot: Snapshot,
+    alpha: number,
+    textureForFrame: (frame: number) => Texture,
+    fog?: { readonly view: FogView; readonly texture: Texture },
+  ): void {
     this.fx.update(this.layers.groundFx, performance.now());
+    if (fog !== undefined) {
+      const view = this.camera.view;
+      // Thousands of fog diamonds are static between simulation ticks and camera
+      // changes. Rebuilding their live set at display refresh rate made a minimap
+      // round trip stall the browser; this key keeps the exact same result at 10 Hz.
+      const fogSync = [snapshot.tick, view.x, view.y, view.zoom, view.width, view.height].join(':');
+      if (fogSync !== this.lastFogSync) {
+        this.fog.sync(this.layers.fog, this.visibleFog(fog.view), fog.texture);
+        this.lastFogSync = fogSync;
+      }
+    }
     const seen = new Set<EntityId>();
     const ordered: Array<{ entity: Entity; managed: ManagedSprite; x: number; y: number }> = [];
     for (const entity of snapshot.entities) {
       if (!entity.alive || entity.renderable === undefined) continue;
+      if (
+        fog !== undefined &&
+        !isEntityVisible(
+          fog.view,
+          entity.faction,
+          entity.building !== undefined || entity.lair !== undefined,
+          entity.transform.x,
+          entity.transform.y,
+        )
+      ) {
+        continue;
+      }
       seen.add(entity.id);
       const position = interpolatePosition(entity.transform, entity.renderable, alpha);
       const screen = worldToScreen(position.x, position.y);
@@ -219,7 +324,9 @@ export class StageRenderer {
 
   destroy(): void {
     this.terrain.destroy();
+    for (const child of this.layers.landscape.removeChildren()) child.destroy();
     this.fog.clear(this.layers.fog);
+    this.lastFogSync = '';
     this.fx.clear(this.layers.groundFx);
     this.sprites.clear();
     this.freeSprites.length = 0;
@@ -274,13 +381,6 @@ export class StageRenderer {
   }
 }
 
-const GRASS_TINTS = [0xffffff, 0xf4fff1, 0xebf7df, 0xf8f0da, 0xe5f0d7] as const;
-
-function grassTint(tx: number, ty: number): number {
-  const hash = (Math.imul(tx, 73856093) ^ Math.imul(ty, 19349663)) >>> 0;
-  return GRASS_TINTS[hash % GRASS_TINTS.length] as number;
-}
-
 /** Pointer drag plus trackpad/wheel zoom. The returned disposer prevents leaked listeners. */
 export function attachCameraControls(
   canvas: HTMLCanvasElement,
@@ -322,11 +422,72 @@ export function attachCameraControls(
     );
     onChange();
   };
+  // ── Keyboard ───────────────────────────────────────────────────────────────
+  // Held keys are integrated per frame rather than acted on per keydown event, so
+  // pan speed follows the display and not the OS key-repeat rate.
+  const held = new Set<string>();
+  let panFrame = 0;
+  let lastPan = 0;
+
+  const stepPan = (nowMs: number): void => {
+    const elapsed = Math.min(nowMs - lastPan, 100);
+    lastPan = nowMs;
+    let dx = 0;
+    let dy = 0;
+    if (held.has('left')) dx += 1;
+    if (held.has('right')) dx -= 1;
+    if (held.has('up')) dy += 1;
+    if (held.has('down')) dy -= 1;
+    if (dx !== 0 || dy !== 0) {
+      const speed = (KEYBOARD_PAN_PX_PER_SECOND * elapsed) / 1000;
+      camera.panBy(dx * speed, dy * speed);
+      onChange();
+    }
+    panFrame = held.size === 0 ? 0 : requestAnimationFrame(stepPan);
+  };
+  const startPanning = (): void => {
+    if (panFrame !== 0) return;
+    lastPan = performance.now();
+    panFrame = requestAnimationFrame(stepPan);
+  };
+
+  const keydown = (event: KeyboardEvent): void => {
+    // The tax slider, the build menu and the minimap all handle their own arrow
+    // keys. preventDefault on their side does not stop this window-level listener,
+    // so a focused minimap would survey and pan the camera at the same time.
+    if (ownsArrowKeys(event.target)) return;
+    const direction = PAN_KEYS[event.key];
+    if (direction !== undefined) {
+      event.preventDefault();
+      held.add(direction);
+      startPanning();
+      return;
+    }
+    if (event.key === '+' || event.key === '=') {
+      event.preventDefault();
+      camera.zoomBy(KEYBOARD_ZOOM_STEP);
+      onChange();
+    } else if (event.key === '-' || event.key === '_') {
+      event.preventDefault();
+      camera.zoomBy(1 / KEYBOARD_ZOOM_STEP);
+      onChange();
+    }
+  };
+  const keyup = (event: KeyboardEvent): void => {
+    const direction = PAN_KEYS[event.key];
+    if (direction !== undefined) held.delete(direction);
+  };
+  // Alt-tabbing away with a key down otherwise leaves the map scrolling forever.
+  const blur = (): void => held.clear();
+
   canvas.addEventListener('pointerdown', down);
   canvas.addEventListener('pointermove', move);
   canvas.addEventListener('pointerup', up);
   canvas.addEventListener('pointercancel', up);
   canvas.addEventListener('wheel', wheel, { passive: false });
+  addEventListener('keydown', keydown);
+  addEventListener('keyup', keyup);
+  addEventListener('blur', blur);
   return () => {
     canvas.style.touchAction = priorTouchAction;
     canvas.removeEventListener('pointerdown', down);
@@ -334,5 +495,44 @@ export function attachCameraControls(
     canvas.removeEventListener('pointerup', up);
     canvas.removeEventListener('pointercancel', up);
     canvas.removeEventListener('wheel', wheel);
+    removeEventListener('keydown', keydown);
+    removeEventListener('keyup', keyup);
+    removeEventListener('blur', blur);
+    if (panFrame !== 0) cancelAnimationFrame(panFrame);
   };
+}
+
+/** Screen pixels per second of keyboard panning, independent of key-repeat rate. */
+const KEYBOARD_PAN_PX_PER_SECOND = 900;
+const KEYBOARD_ZOOM_STEP = 1.2;
+
+const PAN_KEYS: Readonly<Record<string, string | undefined>> = {
+  ArrowLeft: 'left',
+  ArrowRight: 'right',
+  ArrowUp: 'up',
+  ArrowDown: 'down',
+  a: 'left',
+  A: 'left',
+  d: 'right',
+  D: 'right',
+  w: 'up',
+  W: 'up',
+  s: 'down',
+  S: 'down',
+};
+
+/**
+ * Whether the focused element has already claimed the arrow keys.
+ *
+ * An explicit tabindex is the honest signal: it is how an element declares itself
+ * keyboard-interactive. The Pixi canvas has none, so panning still works whenever
+ * focus is nowhere in particular.
+ */
+function ownsArrowKeys(target: EventTarget | null): boolean {
+  if (!(target instanceof HTMLElement)) return false;
+  if (target.isContentEditable) return true;
+  if (target.hasAttribute('tabindex')) return true;
+  // Deliberately not buttons: nothing in this UI navigates a button with arrows,
+  // and clicking Pause should not silently disable panning.
+  return ['INPUT', 'TEXTAREA', 'SELECT'].includes(target.tagName);
 }

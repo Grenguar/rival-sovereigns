@@ -77,6 +77,7 @@ async function main(): Promise<void> {
  * say so, with the upstream licence and source page attached.
  */
 async function provenanceFor(sha256: string): Promise<unknown[]> {
+  const approvedFrames = new Set<string>();
   const entries: unknown[] = [
     {
       name: 'stage-a-procedural-atlas',
@@ -87,6 +88,24 @@ async function provenanceFor(sha256: string): Promise<unknown[]> {
       sha256,
     },
   ];
+
+  try {
+    const approved = JSON.parse(
+      await readFile('art/frames/.approved-art.json', 'utf8'),
+    ) as { generatedBy: string; frames: string[] };
+    for (const frame of approved.frames) approvedFrames.add(frame);
+    entries.push({
+      name: 'approved-ai-generated-originals',
+      url: 'self-made',
+      license: 'self-made',
+      author: 'Generated with OpenAI image generation under contributor direction',
+      sourcePage: approved.generatedBy,
+      frames: approved.frames,
+      sha256,
+    });
+  } catch {
+    // Older/procedural-only clones legitimately have no approved-art receipt.
+  }
 
   let stageB: StageBProvenance | null = null;
   try {
@@ -112,6 +131,11 @@ async function provenanceFor(sha256: string): Promise<unknown[]> {
     );
   }
 
+  // A later approved-art import can intentionally replace a Stage B frame. Only
+  // attribute third-party material that survived into the packed atlas.
+  const effectiveFrames = stageB.frames.filter((frame) => !approvedFrames.has(frame));
+  if (effectiveFrames.length === 0) return entries;
+
   entries.push({
     name: `stage-b-${source.id}`,
     url: source.sourcePage ?? 'unknown',
@@ -119,7 +143,7 @@ async function provenanceFor(sha256: string): Promise<unknown[]> {
     author: source.author,
     sourcePage: source.sourcePage ?? 'unknown',
     licenceUrl: source.licenceUrl ?? 'unknown',
-    frames: stageB.frames,
+    frames: effectiveFrames,
     sha256,
   });
   return entries;

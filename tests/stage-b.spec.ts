@@ -67,6 +67,7 @@ describe('licensing stays honest', () => {
       license: string;
       author: string;
       sourcePage: string;
+      frames?: string[];
     }[];
 
     if (!stageBRan) {
@@ -76,11 +77,19 @@ describe('licensing stays honest', () => {
     }
 
     const thirdParty = runtime.filter((e) => e.license !== 'self-made');
-    expect(thirdParty.length).toBeGreaterThan(0);
     for (const entry of thirdParty) {
       expect(entry.author, 'third-party art needs a named author').toBeTruthy();
       expect(entry.sourcePage).toMatch(/^https:\/\//);
       expect(entry.license).toMatch(/^(CC0|CC-BY)/);
+    }
+
+    if (thirdParty.length === 0) {
+      const prov = JSON.parse(readFileSync(STAGE_B_PROVENANCE, 'utf8')) as StageBProvenance;
+      const selfMade = new Set(runtime.filter((entry) => entry.license === 'self-made').flatMap((entry) => entry.frames ?? []));
+      expect(
+        prov.frames.every((frame) => selfMade.has(frame)),
+        'third-party attribution may be omitted only when every Stage B frame was replaced',
+      ).toBe(true);
     }
   });
 

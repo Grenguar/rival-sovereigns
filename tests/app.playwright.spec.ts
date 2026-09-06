@@ -6,11 +6,12 @@ test.describe('Pixi map surface', () => {
     page.on('pageerror', (error) => errors.push(error.message));
 
     await page.goto('/');
-    await expect(page.locator('canvas')).toBeVisible();
+    // The minimap is a canvas too; this assertion is about the Pixi world surface.
+    const world = page.locator('canvas:not(.rs-minimap__canvas)');
+    await expect(world).toBeVisible();
     await expect
       .poll(() =>
-        page
-          .locator('canvas')
+        world
           .evaluate(
             (node) => node instanceof HTMLCanvasElement && node.width > 0 && node.height > 0,
           ),

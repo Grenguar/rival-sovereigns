@@ -1,4 +1,4 @@
-import type { ChangeEvent } from 'react';
+import { useEffect, useState, type ChangeEvent } from 'react';
 import type { Command, Snapshot } from '../core/types';
 import { formatGold, formatPercent, formatTick } from './format';
 import './ui.css';
@@ -10,8 +10,15 @@ export interface HudProps {
 }
 
 export function Hud({ snapshot, onCommand }: HudProps): JSX.Element {
+  const [taxPercent, setTaxPercent] = useState(Math.round(snapshot.taxRate * 100));
+  useEffect(() => setTaxPercent(Math.round(snapshot.taxRate * 100)), [snapshot.taxRate]);
+
   const setTaxRate = (event: ChangeEvent<HTMLInputElement>): void => {
-    onCommand({ t: 'SET_TAX_RATE', rate: Number(event.target.value) / 100 });
+    const percent = Number(event.target.value);
+    // Keep the decree visible while paused; the deterministic world applies the
+    // queued command on the first resumed tick.
+    setTaxPercent(percent);
+    onCommand({ t: 'SET_TAX_RATE', rate: percent / 100 });
   };
 
   return (
@@ -24,7 +31,7 @@ export function Hud({ snapshot, onCommand }: HudProps): JSX.Element {
 
       <label className="rs-tax-control">
         <span className="rs-eyebrow">Tax rate</span>
-        <span className="rs-tax-control__value">{formatPercent(snapshot.taxRate)}</span>
+        <span className="rs-tax-control__value">{formatPercent(taxPercent / 100)}</span>
         <input
           aria-label="Tax rate"
           max="50"
@@ -32,7 +39,7 @@ export function Hud({ snapshot, onCommand }: HudProps): JSX.Element {
           onChange={setTaxRate}
           step="1"
           type="range"
-          value={Math.round(snapshot.taxRate * 100)}
+          value={taxPercent}
         />
         <span className="rs-subtle">Higher tax lowers loyalty.</span>
       </label>

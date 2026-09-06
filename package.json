@@ -11,9 +11,10 @@
     "prebuild": "tsx tools/gen-credits.ts --check",
     "build": "tsc -b && vite build",
     "preview": "vite preview",
-    "pregen": "tsx tools/gen-curves.ts && tsx tools/gen-names.ts && tsx tools/make-placeholders.ts && tsx tools/stage-b.ts && tsx tools/build-atlas.ts",
+    "pregen": "tsx tools/gen-curves.ts && tsx tools/gen-names.ts && tsx tools/make-placeholders.ts && tsx tools/stage-b.ts && tsx tools/import-approved-art.ts && tsx tools/build-atlas.ts",
     "pregen:sprites": "tsx tools/make-placeholders.ts",
     "pregen:atlas": "tsx tools/build-atlas.ts",
+    "art:import": "tsx tools/import-approved-art.ts && tsx tools/build-atlas.ts",
     "assets:fetch": "tsx tools/fetch-assets.ts",
     "credits": "tsx tools/gen-credits.ts",
     "credits:check": "tsx tools/gen-credits.ts --check",
@@ -24,7 +25,7 @@
     "format": "prettier --write .",
     "test:e2e": "playwright test",
     "test:all": "vitest run && playwright test",
-    "stage-b": "tsx tools/stage-b.ts && tsx tools/build-atlas.ts"
+    "stage-b": "tsx tools/stage-b.ts && tsx tools/import-approved-art.ts && tsx tools/build-atlas.ts"
   },
   "dependencies": {
     "pixi.js": "^8.6.6",
