@@ -1,6 +1,6 @@
 import { Application, Container, Sprite } from 'pixi.js';
 import type { Texture } from 'pixi.js';
-import type { BuildingKind, Entity, EntityId, Snapshot, TileCoord } from '../core/types';
+import type { Entity, EntityId, Snapshot, TileCoord } from '../core/types';
 import { compareDepth, screenToWorld, worldToScreen } from '../core/spatial/iso';
 import type { Camera } from './camera';
 import { FogRenderer } from './fog';
@@ -167,7 +167,8 @@ export class StageRenderer {
       managed.sprite.position.set(screen.sx, screen.sy);
       managed.sprite.tint = entity.renderable.tint;
       if (entity.building !== undefined) {
-        managed.sprite.tint = buildingTint(entity.building.kind);
+        // Building materials are painted into the atlas. Applying an additional
+        // class tint here muddies stone, timber, warm windows, and potion stalls.
         const scale =
           entity.building.kind === 'palace'
             ? 1.25
@@ -268,20 +269,6 @@ const GRASS_TINTS = [0xffffff, 0xf4fff1, 0xebf7df, 0xf8f0da, 0xe5f0d7] as const;
 function grassTint(tx: number, ty: number): number {
   const hash = (Math.imul(tx, 73856093) ^ Math.imul(ty, 19349663)) >>> 0;
   return GRASS_TINTS[hash % GRASS_TINTS.length] as number;
-}
-
-function buildingTint(kind: BuildingKind): number {
-  const tints: Record<BuildingKind, number> = {
-    palace: 0xffd47a,
-    warriorsGuild: 0xf17f72,
-    roguesGuild: 0xc996e8,
-    rangersLodge: 0x91d78a,
-    marketplace: 0xf1bf76,
-    blacksmith: 0xa9bdd2,
-    inn: 0xe7a1ad,
-    guardhouse: 0x9fcf9a,
-  };
-  return tints[kind];
 }
 
 /** Pointer drag plus trackpad/wheel zoom. The returned disposer prevents leaked listeners. */
