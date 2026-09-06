@@ -5,7 +5,7 @@ import { compareDepth, screenToWorld, worldToScreen } from '../core/spatial/iso'
 import type { Camera } from './camera';
 import { FogRenderer } from './fog';
 import { MIRRORED_FACINGS } from './frame-for';
-import { GroundFxRenderer } from './fx';
+import { GroundFxRenderer, type GroundFxKind } from './fx';
 import { interpolatePosition } from './interpolate';
 import { TerrainChunkCache } from './terrain';
 
@@ -153,8 +153,18 @@ export class StageRenderer {
       : point;
   }
 
+  /**
+   * Spawns a ground effect at a world tile. Purely cosmetic: the effect's
+   * lifetime is wall-clock and never re-enters the simulation.
+   */
+  spawnFx(kind: GroundFxKind, x: number, y: number, texture: Texture, now: number): void {
+    const screen = worldToScreen(x, y);
+    this.fx.spawn(this.layers.groundFx, texture, screen.sx, screen.sy, kind, now);
+  }
+
   /** Call once per visual frame after the simulation advances its fixed ticks. */
   draw(snapshot: Snapshot, alpha: number, textureForFrame: (frame: number) => Texture): void {
+    this.fx.update(this.layers.groundFx, performance.now());
     const seen = new Set<EntityId>();
     const ordered: Array<{ entity: Entity; managed: ManagedSprite; x: number; y: number }> = [];
     for (const entity of snapshot.entities) {

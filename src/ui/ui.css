@@ -131,25 +131,50 @@ body,
 .rs-hero-name {
   color: #f4f0e5;
   display: block;
+  /* Was 0.7rem. Eleven pixels of bold text over a busy isometric map is below
+     the readable floor for anything a player is expected to scan mid-fight. */
   font:
-    700 0.7rem Outfit,
+    700 0.875rem Outfit,
     'Trebuchet MS',
     sans-serif;
   overflow: hidden;
   padding-bottom: 2px;
   text-align: center;
   text-overflow: ellipsis;
-  text-shadow: 1px 1px 2px #0b0d14;
+  /* Names cross grass, road, rock and water. A single-corner drop shadow only
+     protects one edge; ring the glyphs so they survive any background. */
+  text-shadow:
+    1px 1px 0 #0b0d14,
+    -1px 1px 0 #0b0d14,
+    1px -1px 0 #0b0d14,
+    -1px -1px 0 #0b0d14,
+    0 2px 4px rgb(0 0 0 / 55%);
   white-space: nowrap;
+}
+
+/* Class is carried by a shape as well as a hue. Warrior salmon against ranger
+   green is precisely the pair red-green colour blindness collapses, which is
+   around 8% of men — without the sigil they cannot tell the two apart. */
+.rs-hero-name::before {
+  padding-right: 3px;
 }
 .rs-hero-name--warrior {
   color: #f37c70;
 }
+.rs-hero-name--warrior::before {
+  content: '▲';
+}
 .rs-hero-name--ranger {
   color: #7edb95;
 }
+.rs-hero-name--ranger::before {
+  content: '◆';
+}
 .rs-hero-name--rogue {
   color: #c797ee;
+}
+.rs-hero-name--rogue::before {
+  content: '●';
 }
 .rs-selection-ring {
   border: 2px solid #fff0ae;
@@ -513,7 +538,7 @@ body,
   position: absolute;
   z-index: 18;
 }
-.rs-damage-number {
+.rs-floater {
   animation: rs-damage-rise 420ms ease-out forwards;
   color: #fff0e5;
   font:
@@ -521,10 +546,28 @@ body,
     'Trebuchet MS',
     sans-serif;
   position: absolute;
+  /* A two-corner shadow leaves the other two edges bare, and floaters cross
+     grass, road, rock and water within one animation. Ring the glyphs. */
   text-shadow:
-    1px 1px 0 var(--rs-danger),
-    -1px -1px 0 var(--rs-danger);
+    1px 1px 0 #0b0d14,
+    -1px 1px 0 #0b0d14,
+    1px -1px 0 #0b0d14,
+    -1px -1px 0 #0b0d14,
+    0 2px 4px rgb(0 0 0 / 55%);
   transform: translate(-50%, -100%);
+  white-space: nowrap;
+}
+.rs-floater--damage {
+  color: #ffd9d2;
+}
+.rs-floater--reward {
+  color: var(--rs-gold);
+}
+.rs-floater--level {
+  animation-duration: 900ms;
+  color: #fff0ae;
+  font-size: 1.15rem;
+  letter-spacing: 0.06em;
 }
 @keyframes rs-damage-rise {
   from {
@@ -566,7 +609,7 @@ body,
 @media (prefers-reduced-motion: reduce) {
   .rs-hud *,
   .rs-inspector *,
-  .rs-damage-number {
+  .rs-floater {
     animation-duration: 0ms !important;
     scroll-behavior: auto;
     transition-duration: 0ms !important;

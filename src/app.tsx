@@ -11,11 +11,13 @@ import type {
   Handle,
   Snapshot,
   TileCoord,
+  WorldEvent,
 } from './core/types';
 import { TICK_MS } from './core/world';
 import { Camera } from './render/camera';
-import { FRAME_NAMES, FRAMES } from './render/frames.gen';
+import { spawnEventFx } from './render/event-fx';
 import { captureRenderablePositions, syncRenderables } from './render/frame-for';
+import { FRAME_NAMES, FRAMES } from './render/frames.gen';
 import { attachCameraControls, StageRenderer } from './render/stage';
 import { ActionBar, flagKindForMode, type InteractionMode } from './ui/ActionBar';
 import { BuildMenu, type BuildingPlacement } from './ui/BuildMenu';
@@ -115,6 +117,7 @@ export function App(): JSX.Element {
     let stopControls = () => {};
     let frame = 0;
     let last = performance.now();
+    let lastPublishedTick = -1;
     let accumulator = 0;
     void (async () => {
       const element = canvas.current;
@@ -165,18 +168,29 @@ export function App(): JSX.Element {
       );
       const resize = (): void => renderer?.resize(innerWidth, innerHeight);
       addEventListener('resize', resize);
+      const frameEvents: WorldEvent[] = [];
       const loop = (now: number): void => {
         accumulator = Math.min(accumulator + now - last, TICK_MS * 5);
         last = now;
+        frameEvents.length = 0;
         while (!pausedRef.current && accumulator >= TICK_MS) {
           // Capture the old fixed-tick state first: interpolating from a unit's
           // spawn position causes the visible snap/flicker reported in playtests.
           captureRenderablePositions(world.current.snapshot().entities);
           world.current.step();
           accumulator -= TICK_MS;
-          setSnapshot(world.current.snapshot());
+          // The world clears its event buffer at the top of every step, so a frame
+          // that catches up two ticks used to throw the first tick's damage numbers
+          // and deaths away. Collect them, then publish once per frame.
+          const stepped = world.current.snapshot();
+          frameEvents.push(...stepped.events);
+          spawnEventFx(renderer, stepped, now, texture);
         }
         const snap = world.current.snapshot();
+        if (frameEvents.length > 0 || snap.tick !== lastPublishedTick) {
+          lastPublishedTick = snap.tick;
+          setSnapshot({ ...snap, events: [...frameEvents] });
+        }
         syncRenderables(snap.entities, world.current.tick);
         renderer?.draw(snap, pausedRef.current ? 0 : accumulator / TICK_MS, texture);
         frame = requestAnimationFrame(loop);

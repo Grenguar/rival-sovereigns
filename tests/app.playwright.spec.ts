@@ -57,4 +57,13 @@ test.describe('Pixi map surface', () => {
     for (const world of ['.rs-world-labels', '.rs-flag-labels', '.rs-event-overlay'])
       expect(await zIndex(world), `${world} must sit under the chrome`).toBeLessThan(chrome);
   });
+
+  test('announces the moments that matter once the fighting starts', async ({ page }) => {
+    await page.goto('/');
+
+    // The world empties its event buffer at the top of every step, so a frame
+    // that catches up two ticks silently drops the first tick's events. First
+    // contact in this scenario is around tick 371, roughly nineteen seconds in.
+    await expect(page.locator('.rs-floater').first()).toBeVisible({ timeout: 90_000 });
+  });
 });
