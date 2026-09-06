@@ -15,7 +15,7 @@ import type {
 import { TICK_MS } from './core/world';
 import { Camera } from './render/camera';
 import { FRAME_NAMES, FRAMES } from './render/frames.gen';
-import { syncRenderables } from './render/frame-for';
+import { captureRenderablePositions, syncRenderables } from './render/frame-for';
 import { attachCameraControls, StageRenderer } from './render/stage';
 import { ActionBar, flagKindForMode, type InteractionMode } from './ui/ActionBar';
 import { BuildMenu, type BuildingPlacement } from './ui/BuildMenu';
@@ -120,6 +120,16 @@ export function App(): JSX.Element {
       const element = canvas.current;
       if (element === null) return;
       const sheet = await Assets.load<Spritesheet>('/atlas/game.json');
+      // A stale atlas is otherwise silent: every lookup returns undefined and the
+      // world renders as empty ground. Regenerating frames.gen.ts without a
+      // matching game.json (pnpm pregen, then reload) is the usual cause.
+      const missing = FRAME_NAMES.filter((name) => sheet.textures[name] === undefined);
+      if (missing.length > 0) {
+        throw new Error(
+          `atlas is stale: ${String(missing.length)} of ${String(FRAME_NAMES.length)} frames ` +
+            `are missing, starting with "${String(missing[0])}". Run pnpm pregen and reload.`,
+        );
+      }
       if (disposed) return;
       const camera = new Camera(
         { minX: -3072, minY: 0, maxX: 3072, maxY: 3072 },
@@ -135,8 +145,11 @@ export function App(): JSX.Element {
       rendererRef.current = renderer;
       const palace = worldToScreen(MISSION.palace.tx, MISSION.palace.ty);
       camera.centerOn(palace.sx, palace.sy);
-      const texture = (index: number): Texture =>
-        sheet.textures[FRAME_NAMES[index] as string] as Texture;
+      const texture = (index: number): Texture => {
+        const frame = sheet.textures[FRAME_NAMES[index] as string];
+        if (frame === undefined) throw new Error(`no atlas frame at index ${String(index)}`);
+        return frame;
+      };
       const terrainFrames: Record<string, keyof typeof FRAMES> = {
         grass: 'terrain_grass',
         forest: 'terrain_forest',
@@ -156,6 +169,9 @@ export function App(): JSX.Element {
         accumulator = Math.min(accumulator + now - last, TICK_MS * 5);
         last = now;
         while (!pausedRef.current && accumulator >= TICK_MS) {
+          // Capture the old fixed-tick state first: interpolating from a unit's
+          // spawn position causes the visible snap/flicker reported in playtests.
+          captureRenderablePositions(world.current.snapshot().entities);
           world.current.step();
           accumulator -= TICK_MS;
           setSnapshot(world.current.snapshot());

@@ -26,13 +26,49 @@ function structureState(e: Entity): 'construction' | 'intact' | 'damaged' | 'rub
  * Frame-delta animation desynchronises visuals from simulation state, the same
  * reason positions interpolate by tick alpha — docs/02-architecture.md §8.
  */
+type RenderedFacing = 'ne' | 'e' | 'se' | 's';
+
+/**
+ * DIR8 indexes tile-space deltas; the atlas holds screen-space silhouettes. Under
+ * the iso projection (sx = x - y, sy = x + y) tile direction 0 (0,-1) points
+ * up-right on screen, so the two spaces are a step apart. The atlas carries the
+ * eastern half only — MIRRORED_FACINGS names the western directions the renderer
+ * flips to cover the rest. Direction 7 is due north, equidistant from NE and NW;
+ * it resolves to the unmirrored frame so selection stays deterministic.
+ */
+function facingFor(e: Entity): RenderedFacing {
+  switch (e.transform.facing) {
+    case 1:
+    case 5:
+      return 'e';
+    case 2:
+    case 4:
+      return 'se';
+    case 3:
+      return 's';
+    default:
+      return 'ne';
+  }
+}
+
+/** Facing selection for a bare DIR8 index — exposed so tests need no entity. */
+export function facingForTest(facing: number): RenderedFacing {
+  return facingFor({ transform: { facing } } as Entity);
+}
+
+/** DIR8 indices whose screen direction points west, and so render mirrored. */
+export const MIRRORED_FACINGS: ReadonlySet<number> = new Set([4, 5, 6]);
+
 function unitFrame(kind: string, e: Entity, tick: number): string {
   const moving = e.movement?.destination != null;
   const attacking = e.combat !== undefined && e.combat.target.index >= 0 && !moving;
+  const facing = facingFor(e);
 
-  if (attacking) return `${kind}_attack_s_${String(Math.floor(tick / 6) % 2).padStart(2, '0')}`;
-  if (moving) return `${kind}_walk_s_${String(Math.floor(tick / 2) % 4).padStart(2, '0')}`;
-  return `${kind}_idle_s_00`;
+  if (attacking)
+    return `${kind}_attack_${facing}_${String(Math.floor(tick / 6) % 2).padStart(2, '0')}`;
+  if (moving)
+    return `${kind}_walk_${facing}_${String(Math.floor(tick / 2) % 4).padStart(2, '0')}`;
+  return `${kind}_idle_${facing}_00`;
 }
 
 /** The frame index for an entity, or null when it should not be drawn. */
@@ -76,5 +112,14 @@ export function syncRenderables(entities: readonly Entity[], tick: number): void
     } else {
       e.renderable.frame = frame;
     }
+  }
+}
+
+/** Captures the prior fixed-tick position immediately before simulation advances. */
+export function captureRenderablePositions(entities: readonly Entity[]): void {
+  for (const e of entities) {
+    if (e.renderable === undefined) continue;
+    e.renderable.prevX = e.transform.x;
+    e.renderable.prevY = e.transform.y;
   }
 }

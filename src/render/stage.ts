@@ -4,6 +4,7 @@ import type { BuildingKind, Entity, EntityId, Snapshot, TileCoord } from '../cor
 import { compareDepth, screenToWorld, worldToScreen } from '../core/spatial/iso';
 import type { Camera } from './camera';
 import { FogRenderer } from './fog';
+import { MIRRORED_FACINGS } from './frame-for';
 import { GroundFxRenderer } from './fx';
 import { interpolatePosition } from './interpolate';
 import { TerrainChunkCache } from './terrain';
@@ -175,7 +176,14 @@ export class StageRenderer {
               : 1;
         managed.sprite.scale.set(scale);
       } else {
-        managed.sprite.scale.set(1);
+        // The atlas renders only the east-facing half of the compass. Mirroring
+        // the matching west-facing directions gives eight movement states without
+        // doubling the art budget. Buildings and flags have no facing to mirror.
+        const mirrored =
+          entity.lair === undefined &&
+          entity.flag === undefined &&
+          MIRRORED_FACINGS.has(entity.transform.facing);
+        managed.sprite.scale.set(mirrored ? -1 : 1, 1);
       }
       if (managed.layer === this.layers.buildings)
         ordered.push({ entity, managed, x: position.x, y: position.y });

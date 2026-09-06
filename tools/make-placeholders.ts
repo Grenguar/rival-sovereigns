@@ -1,4 +1,4 @@
-import { mkdir, writeFile } from 'node:fs/promises';
+import { mkdir, rm, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { encodePng } from './png';
 
@@ -97,6 +97,25 @@ function diamond(
           255,
         );
 }
+/** A footprint placed inside a taller transparent building frame. */
+function diamondAt(
+  p: Uint8Array,
+  w: number,
+  cx: number,
+  cy: number,
+  halfW: number,
+  halfH: number,
+  c: readonly [number, number, number],
+): void {
+  for (let y = cy - halfH; y <= cy + halfH; y++) {
+    const ratio = 1 - Math.abs(y - cy) / halfH;
+    const span = Math.floor(halfW * ratio);
+    for (let x = cx - span; x <= cx + span; x++) {
+      const shade = y > cy ? 18 : x < cx ? 10 : 0;
+      pixel(p, w, x, y, [c[0] - shade, c[1] - shade, c[2]], 255);
+    }
+  }
+}
 function rect(
   p: Uint8Array,
   w: number,
@@ -123,7 +142,9 @@ function gable(
 }
 function buildingSprite(p: Uint8Array, building: string, state: string): void {
   const base = state === 'rubble' ? colors.rock : colors.road;
-  diamond(p, 128, 64, base);
+  // Building frames are 128x112, with their foundation deliberately near the
+  // bottom. Their Pixi bottom anchor now really is the front edge of the tile.
+  diamondAt(p, 128, 64, 88, 56, 28, base);
   const roof = building.includes('rogue')
     ? colors.rogue
     : building.includes('ranger')
@@ -147,28 +168,44 @@ function buildingSprite(p: Uint8Array, building: string, state: string): void {
           : building === 'guardhouse'
             ? 42
             : 54;
+  const baseline = 88;
   const left = building === 'guardhouse' ? 48 : building === 'palace' ? 24 : 34;
   const right = 128 - left;
-  rect(p, 128, left, 62 - height, right, 62, roof);
-  // A different roofline makes recognition possible at game speed, before colour.
+  const wall = [191, 157, 105] as const;
+  // A two-plane wall and pitched roof create an actual isometric silhouette rather
+  // than a coloured rectangle. Identification comes from roofline first, tint second.
+  for (let y = baseline - height; y < baseline; y++) {
+    const inset = Math.floor((baseline - y) / 7);
+    rect(p, 128, left + inset, y, 64, y + 1, wall);
+    rect(p, 128, 64, y, right - inset, y + 1, [151, 112, 72]);
+  }
+  diamondAt(
+    p,
+    128,
+    64,
+    baseline - height,
+    right - 64,
+    Math.max(10, Math.floor((right - left) / 4)),
+    roof,
+  );
   if (state !== 'rubble') {
     if (building === 'palace') {
-      rect(p, 128, 30, 22, 48, 62, roof);
-      rect(p, 128, 80, 22, 98, 62, roof);
-      rect(p, 128, 50, 12, 78, 62, roof);
-      gable(p, 39, 8, 26, 16, colors.gold);
-      gable(p, 89, 8, 26, 16, colors.gold);
-      gable(p, 64, 0, 32, 20, colors.gold);
+      rect(p, 128, 30, 38, 48, baseline, roof);
+      rect(p, 128, 80, 38, 98, baseline, roof);
+      rect(p, 128, 50, 24, 78, baseline, roof);
+      gable(p, 39, 24, 26, 16, colors.gold);
+      gable(p, 89, 24, 26, 16, colors.gold);
+      gable(p, 64, 10, 32, 20, colors.gold);
     }
     if (building.includes('Guild')) {
-      rect(p, 128, 28, 62 - height - 10, 100, 62 - height + 4, roof);
+      rect(p, 128, 28, baseline - height - 10, 100, baseline - height + 4, roof);
       rect(
         p,
         128,
         building.includes('warrior') ? 35 : 82,
-        62 - height - 28,
+        baseline - height - 28,
         building.includes('warrior') ? 42 : 89,
-        62 - height,
+        baseline - height,
         colors.gold,
       );
     }
@@ -178,36 +215,41 @@ function buildingSprite(p: Uint8Array, building: string, state: string): void {
           p,
           128,
           x,
-          62 - height - 10,
+          baseline - height - 10,
           x + 7,
-          62 - height + 8,
+          baseline - height + 8,
           x % 24 === 0 ? colors.warrior : colors.gold,
         );
     }
     if (building === 'blacksmith') {
-      rect(p, 128, 77, 62 - height - 20, 88, 62 - height + 5, colors.rock);
-      rect(p, 128, 52, 46, 76, 51, [55, 55, 62]);
+      rect(p, 128, 77, baseline - height - 20, 88, baseline - height + 5, colors.rock);
+      rect(p, 128, 52, baseline - 16, 76, baseline - 11, [55, 55, 62]);
     }
     if (building === 'inn') {
       rect(p, 128, 51, 34, 77, 40, colors.gold);
-      rect(p, 128, 61, 38, 67, 62, [74, 47, 36]);
+      rect(p, 128, 61, baseline - 24, 67, baseline, [74, 47, 36]);
     }
     if (building === 'guardhouse') {
-      rect(p, 128, 56, 62 - height - 22, 72, 62 - height + 2, colors.guard);
-      rect(p, 128, 64, 62 - height - 34, 67, 62 - height - 18, colors.gold);
+      rect(p, 128, 56, baseline - height - 22, 72, baseline - height + 2, colors.guard);
+      rect(p, 128, 64, baseline - height - 34, 67, baseline - height - 18, colors.gold);
     }
   }
   if (state === 'damaged')
-    for (let y = 20; y < 62; y += 11) rect(p, 128, 53, y, 57, y + 8, colors.rock);
+    for (let y = 36; y < baseline; y += 11) rect(p, 128, 53, y, 57, y + 8, colors.rock);
 }
-function unitSprite(p: Uint8Array, subject: string, frame: number): void {
+function unitSprite(p: Uint8Array, subject: string, facing: string, frame: number): void {
   const c = colors[subject as keyof typeof colors] ?? colors.goblin;
   // Head, cloak/body and a readable held item — an intentional silhouette, not a capsule.
   for (let y = 9; y < 20; y++)
     for (let x = 11; x < 22; x++)
       if ((x - 16) * (x - 16) + (y - 14) * (y - 14) < 30) pixel(p, 32, x, y, [238, 203, 164]);
+  const side = facing === 'e' ? 3 : facing === 'ne' ? 2 : facing === 'se' ? 1 : 0;
   for (let y = 19; y < 42; y++)
     for (let x = 7; x < 25; x++) if (Math.abs(x - 16) < 3 + (y - 19) / 2) pixel(p, 32, x, y, c);
+  // Two separated feet and an asymmetric arm make the walk cycle legible at game zoom.
+  const stride = frame % 2 === 0 ? 2 : -2;
+  rect(p, 32, 11 + stride, 39, 14 + stride, 46, [54, 47, 43]);
+  rect(p, 32, 18 - stride, 39, 21 - stride, 46, [54, 47, 43]);
   const weapon =
     subject === 'ranger'
       ? colors.gold
@@ -219,16 +261,19 @@ function unitSprite(p: Uint8Array, subject: string, frame: number): void {
   rect(
     p,
     32,
-    subject === 'ranger' ? 23 : 24,
+    (subject === 'ranger' ? 23 : 24) + side,
     19 + (frame % 3),
-    subject === 'ranger' ? 25 : 27,
+    (subject === 'ranger' ? 25 : 27) + side,
     39,
     weapon,
   );
-  if (subject === 'ranger') rect(p, 32, 20, 21, 27, 23, weapon);
+  if (subject === 'ranger') rect(p, 32, 20 + side, 21, 27 + side, 23, weapon);
   if (subject === 'rogue') rect(p, 32, 5, 24, 9, 35, weapon);
 }
 async function main(): Promise<void> {
+  // Frame names change as the art set grows. Leaving prior runs in place makes
+  // the atlas non-idempotent and eventually packs sprites that no renderer uses.
+  await rm(OUT, { recursive: true, force: true });
   await mkdir(OUT, { recursive: true });
   for (const name of frames)
     await write(name, 64, 40, (p) => {
@@ -248,14 +293,18 @@ async function main(): Promise<void> {
     });
   for (const subject of subjects)
     for (const action of ['idle', 'walk', 'attack'])
-      for (
-        let frame = 0;
-        frame < (action === 'walk' ? 4 : action === 'attack' ? 2 : 1);
-        frame++
-      )
-        await write(`${subject}_${action}_s_${String(frame).padStart(2, '0')}`, 32, 48, (p) =>
-          unitSprite(p, subject, frame),
-        );
+      for (const facing of ['ne', 'e', 'se', 's'])
+        for (
+          let frame = 0;
+          frame < (action === 'walk' ? 4 : action === 'attack' ? 2 : 1);
+          frame++
+        )
+          await write(
+            `${subject}_${action}_${facing}_${String(frame).padStart(2, '0')}`,
+            32,
+            48,
+            (p) => unitSprite(p, subject, facing, frame),
+          );
   for (const building of buildings)
     for (const state of ['intact', 'construction', 'damaged', 'rubble'])
       await write(`${building}_${state}`, 128, 112, (p) => buildingSprite(p, building, state));
