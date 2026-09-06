@@ -7,7 +7,7 @@
  * checks the sources while the shipped artefact lies is not a gate.
  */
 
-export const STAGE_B_PROVENANCE = 'public/atlas/src/.stage-b.json';
+export const STAGE_B_PROVENANCE = 'art/frames/.stage-b.json';
 
 export interface StageBProvenance {
   sourceAssetId: string;

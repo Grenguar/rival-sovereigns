@@ -28,7 +28,7 @@ import { writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { decodePng, encodePng, type Png } from './png';
 
-const OUT = 'public/atlas/src';
+const OUT = 'art/frames';
 
 const BLOCKS = 'assets/vendor/kenney_isometric-blocks.zip';
 

@@ -48,7 +48,7 @@ describe('terrain frames', () => {
   });
 
   test('the packed terrain is not blank', () => {
-    const png = decodePng(readFileSync('public/atlas/src/terrain_grass.png'));
+    const png = decodePng(readFileSync('art/frames/terrain_grass.png'));
     let opaque = 0;
     for (let i = 3; i < png.pixels.length; i += 4) {
       if ((png.pixels[i] as number) > 200) opaque++;

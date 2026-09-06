@@ -2,7 +2,7 @@ import { mkdir, rm, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { encodePng } from './png';
 
-const OUT = 'public/atlas/src';
+const OUT = 'art/frames';
 const colors = {
   grass: [90, 139, 74],
   forest: [67, 107, 57],

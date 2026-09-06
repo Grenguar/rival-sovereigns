@@ -31,17 +31,20 @@ body,
   height: 100%;
   width: 100%;
 }
+/* Chrome sits above the world-space overlays (18-21). Those are positioned from
+   camera coordinates, so a hero walking behind a panel would otherwise draw its
+   name badge on top of the treasury readout. */
 .rs-game > .rs-hud {
   left: 12px;
   position: absolute;
   top: 12px;
-  z-index: 10;
+  z-index: 40;
 }
 .rs-game > .rs-inspector {
   position: absolute;
   right: 12px;
   top: 12px;
-  z-index: 10;
+  z-index: 40;
 }
 .rs-game > .rs-action-bar {
   bottom: 12px;

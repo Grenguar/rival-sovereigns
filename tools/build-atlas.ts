@@ -4,7 +4,7 @@ import { join } from 'node:path';
 import { decodePng, encodePng } from './png';
 import { STAGE_B_PROVENANCE, type StageBProvenance } from './provenance';
 
-const SOURCE = 'public/atlas/src';
+const SOURCE = 'art/frames';
 const OUT = 'public/atlas';
 const SIZE = 2048;
 const BORDER = 2;

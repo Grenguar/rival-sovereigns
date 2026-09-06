@@ -35,4 +35,26 @@ test.describe('Pixi map surface', () => {
     );
     await expect(page.getByRole('button', { name: 'Pause game' })).toBeVisible();
   });
+
+  test('keeps chrome above the world-space overlays that drift beneath it', async ({ page }) => {
+    await page.goto('/');
+
+    // World labels, flag labels and floating damage numbers are positioned from
+    // camera coordinates, so a hero walking behind the treasury panel will put a
+    // name badge over it unless the chrome outranks every world layer.
+    // Read the rules rather than the elements: the inspector only mounts once a
+    // hero is selected, but its layering is part of the same contract.
+    const zIndex = async (selector: string): Promise<number> =>
+      page.evaluate((want) => {
+        for (const sheet of Array.from(document.styleSheets))
+          for (const rule of Array.from(sheet.cssRules))
+            if (rule instanceof CSSStyleRule && rule.selectorText.endsWith(want))
+              return Number(rule.style.zIndex);
+        throw new Error(`no rule sets z-index for ${want}`);
+      }, selector);
+
+    const chrome = Math.min(await zIndex('.rs-hud'), await zIndex('.rs-inspector'));
+    for (const world of ['.rs-world-labels', '.rs-flag-labels', '.rs-event-overlay'])
+      expect(await zIndex(world), `${world} must sit under the chrome`).toBeLessThan(chrome);
+  });
 });

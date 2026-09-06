@@ -210,3 +210,14 @@ If you cannot confirm a license on its source page, do not add the asset.
 
 This is not legal caution for its own sake — it is what lets you open-source or sell the
 result later without an archaeology project.
+
+## Concept sheets
+
+`docs/art-direction/` holds the visual-direction sheets the runtime silhouettes
+were drawn from — the building roster, the royal palace, the warriors' guild,
+the marketplace, and the civic, guild-hero and hostile unit line-ups.
+
+They are reference for people, not assets. They live under `docs/` rather than
+`public/` because everything in `public/` is copied verbatim into `dist/`, and
+14 MB of concept art was reaching the browser on first load without a single
+line of code asking for it.
